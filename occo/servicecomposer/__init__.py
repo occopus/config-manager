@@ -21,30 +21,61 @@ class ServiceComposer(factory.MultiBackend):
     .. todo:: Service Composer documentation.
     """
 
+import threading
+
+import uuid
+def uid():
+    return str(uuid.uuid4())
+
 @factory.register(ServiceComposer, 'dummy')
-class DummyServiceComposer(object):
+class DummyServiceComposer(ServiceComposer):
     def __init__(self):
-        self.ib = dict()
+        self.environments = dict()
+        self.node_lookup = dict()
+        import occo.infobroker as ib
+        self.ib = ib.main_info_broker
+        self.lock = threading.RLock()
     def register_node(self, node):
-        log.debug("[SC] Registering node: %r", node)
-        self.ib.environments[node.environment_id].append(node)
-        self.ib.node_lookup[node.id] = node
-        log.debug("[SC] Done - '%r'", self.ib)
-    def drop_node(self, node_id):
+        log.debug("[SC] Registering node: %r", node['name'])
+        with self.lock:
+            envid = node['environment_id']
+            self.environments[envid].setdefault(node['name'], list()).append(node)
+            self.node_lookup[node['id']] = node
+            log.debug("[SC] Done - '%r'", self)
+    def drop_node(self, instance_data):
+        node_id = instance_data['instance_id']
         log.debug("[SC] Dropping node '%s'", node_id)
-        node = self.ib.node_lookup[node_id]
-        env_id = node.environment_id
-        self.ib.environments[env_id] = list(
-            i for i in self.ib.environments[env_id]
-            if i.id != node_id)
-        del self.ib.node_lookup[node_id]
-        log.debug("[SC] Done - '%r'", self.ib)
+        with self.lock:
+            node = self.node_lookup[node_id]
+            env_id = node.environment_id
+            self.environments[env_id] = list(
+                i for i in self.environments[env_id]
+                if i.id != node_id)
+            del self.node_lookup[node_id]
+            log.debug("[SC] Done - '%r'", self)
 
     def create_environment(self, environment_id):
         log.debug("[SC] Creating environment '%s'", environment_id)
-        self.ib.environments.setdefault(environment_id, [])
-        log.debug("[SC] Done - '%r'", self.ib)
+        with self.lock:
+            self.environments.setdefault(environment_id, dict())
+            log.debug("[SC] Done - '%r'", self)
     def drop_environment(self, environment_id):
         log.debug("[SC] Dropping environment '%s'", environment_id)
-        del self.ib.environments[environment_id]
-        log.debug("[SC] Done - '%r'", self.ib)
+        with self.lock:
+            del self.environments[environment_id]
+            log.debug("[SC] Done - '%r'", self)
+    def get_node_state(self, instance_data):
+        node_id = instance_data['node_id']
+        log.debug("[SC] Querying node state for '%s'", node_id)
+        with self.lock:
+            node = self.node_lookup.get(node_id, None)
+            state = 'ready' if node else 'unknown'
+            log.debug("[SC] Done - '%s'", state)
+        return state
+    def __repr__(self):
+        log.info('%r', self.environments)
+        nodelist_repr = lambda nodelist: ', '.join(repr(n) for n in nodelist)
+        envlist_repr = list(
+            '%s:[%s]'%(k, nodelist_repr(v))
+            for (k, v) in self.environments.iteritems())
+        return ' '.join(envlist_repr)
