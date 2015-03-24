@@ -23,7 +23,7 @@ class ServiceComposer(factory.MultiBackend):
 
 @factory.register(ServiceComposer, 'dummy')
 class DummyServiceComposer(object):
-    def __init__(self, infobroker):
+    def __init__(self):
         self.ib = dict()
     def register_node(self, node):
         log.debug("[SC] Registering node: %r", node)
