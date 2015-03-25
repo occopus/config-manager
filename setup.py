@@ -18,7 +18,6 @@ setuptools.setup(
     install_requires=[
         'argparse',
         'PyYAML',
-        'python-dateutils',
         'OCCO-Util',
         'OCCO-InfoBroker',
     ]
