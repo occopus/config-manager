@@ -39,6 +39,12 @@ class DummyServiceComposer(ServiceComposer):
         log.debug("[SC] Registering node: %r", node['name'])
         with self.lock:
             envid = node['environment_id']
+
+            # Implicitly create an environment for individual nodes.
+            # (May not be useful for real SCs!)
+            if not envid in self.environments:
+                self.create_environment(envid)
+
             self.environments[envid].setdefault(node['name'], list()).append(node)
             self.node_lookup[node['id']] = node
             log.debug("[SC] Done - '%r'", self)
