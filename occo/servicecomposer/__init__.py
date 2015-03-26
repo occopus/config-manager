@@ -50,6 +50,10 @@ class DummyServiceComposer(ServiceComposer):
             log.debug("[SC] Done - '%r'", self)
     def drop_node(self, instance_data):
         node_id = instance_data['instance_id']
+        if not node_id in self.node_lookup:
+            log.debug('[SC] drop_node: Node does not exist; skipping.')
+            return
+
         log.debug("[SC] Dropping node '%s'", node_id)
         with self.lock:
             node = self.node_lookup[node_id]
@@ -66,6 +70,9 @@ class DummyServiceComposer(ServiceComposer):
             self.environments.setdefault(environment_id, dict())
             log.debug("[SC] Done - '%r'", self)
     def drop_environment(self, environment_id):
+        if not environment_id in self.environments:
+            log.debug('[SC] drop_environment: Environment does not exist; skipping.')
+            return
         log.debug("[SC] Dropping environment '%s'", environment_id)
         with self.lock:
             del self.environments[environment_id]
