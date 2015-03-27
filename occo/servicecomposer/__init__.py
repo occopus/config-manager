@@ -85,6 +85,12 @@ class DummyServiceComposer(ServiceComposer):
             state = 'ready' if node else 'unknown'
             log.debug("[SC] Done - '%s'", state)
         return state
+    def get_node_attribute(self, node_id, attribute):
+        attrspec = attribute \
+            if hasattr(attribute, '__iter__') \
+            else attribute.split('.')
+        return '{{{{{0}{1}}}}}'.format(node_id,
+                               ''.join('[{0}]'.format(i) for i in attrspec))
     def __repr__(self):
         log.info('%r', self.environments)
         nodelist_repr = lambda nodelist: ', '.join(repr(n) for n in nodelist)
