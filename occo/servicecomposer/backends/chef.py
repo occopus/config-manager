@@ -2,35 +2,25 @@
 # Copyright (C) MTA SZTAKI 2014
 #
 
-""" Service Composer module for OCCO
+""" Chef Service Composer module for OCCO
 
 .. moduleauthor:: Adam Visegradi <adam.visegradi@sztaki.mta.hu>
 
 """
 
-__import__('pkg_resources').declare_namespace(__name__)
+from __future__ import absolute_import
 
-__all__  = [ 'ServiceComposer' ]
+__all__  = [ 'ChefServiceComposer' ]
 
+from occo.servicecomposer import ServiceComposer
 import occo.util.factory as factory
 import logging
+import threading
 
 log = logging.getLogger('occo.servicecomposer')
 
-class ServiceComposer(factory.MultiBackend):
-    """Abstract interface of a service composer.
-
-    .. todo:: Service Composer documentation.
-    """
-
-import threading
-
-import uuid
-def uid():
-    return str(uuid.uuid4())
-
-@factory.register(ServiceComposer, 'dummy')
-class DummyServiceComposer(ServiceComposer):
+@factory.register(ServiceComposer, 'chef')
+class ChefServiceComposer(ServiceComposer):
     def __init__(self):
         self.environments = dict()
         self.node_lookup = dict()
