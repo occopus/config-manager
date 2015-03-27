@@ -26,11 +26,15 @@ class ChefServiceComposer(ServiceComposer):
 
     def role_name(self, node):
         return '{environment_id}_{name}'.format(**node)
+    def node_name(self, node):
+        return '{environment_id}_{name}_{id}'.format(**node)
+    def bootstrap_recipe_name(self):
+        return 'recipe[connect]'
 
     def list_roles(self):
         return list(chef.Role.list(api=self.chefapi))
 
-    def register_role(self, node):
+    def ensure_role(self, node):
         roles = self.list_roles()
         role = self.role_name(node)
         if role in roles:
@@ -39,24 +43,23 @@ class ChefServiceComposer(ServiceComposer):
             log.info('Registering role %r', role)
             chef.Role(role, api=self.chefapi).save()
 
+    def assemble_run_list(self, node):
+        bootstrap_recipe = self.bootstrap_recipe_name()
+        run_list = node['run_list']
+        if not bootstrap_recipe in run_list:
+            run_list.insert(0, bootstrap_recipe)
+        return run_list
+
     def register_node(self, node):
-        log.debug("[SC] Registering node: %r", node['name'])
+        log.info("[SC] Registering node: %r", node['name'])
 
-        self.register_role(node)
-        role = chef.Role(node['name'])
-        n = chef.Node(node['id'], api=self.chefapi)
-        n.run_list = []
-        with self.lock:
-            envid = node['environment_id']
+        self.ensure_role(node)
 
-            # Implicitly create an environment for individual nodes.
-            # (May not be useful for real SCs!)
-            if not envid in self.environments:
-                self.create_environment(envid)
+        n = chef.Node(self.node_name(node), api=self.chefapi)
+        n.run_list = self.assemble_run_list(node)
+        
 
-            self.environments[envid].setdefault(node['name'], list()).append(node)
-            self.node_lookup[node['id']] = node
-            log.debug("[SC] Done - '%r'", self)
+        log.debug("[SC] Done", self)
     def drop_node(self, instance_data):
         node_id = instance_data['instance_id']
         if not node_id in self.node_lookup:
