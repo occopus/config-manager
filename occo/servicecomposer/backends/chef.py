@@ -24,9 +24,20 @@ class ChefServiceComposer(ServiceComposer):
     def __init__(self, **backend_config):
         self.chefapi = chef.ChefAPI(**backend_config)
 
+    def role_name(self, node):
+        return '{environment_id}_{name}'.format(**node)
+
+    def list_roles(self):
+        return list(chef.Role.list(api=self.chefapi))
+
     def register_role(self, node):
-        roles = chef.Role.list(api=self.chefapi)
-        return roles
+        roles = self.list_roles()
+        role = self.role_name(node)
+        if role in roles:
+            log.debug('Role %r already exists', role)
+        else:
+            log.info('Registering role %r', role)
+            chef.Role(role, api=self.chefapi).save()
 
     def register_node(self, node):
         log.debug("[SC] Registering node: %r", node['name'])
