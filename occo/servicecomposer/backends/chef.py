@@ -74,20 +74,11 @@ class ChefServiceComposer(ServiceComposer):
         log.debug("[SC] Done", self)
 
     def drop_node(self, instance_data):
-        node_id = instance_data['instance_id']
-        if not node_id in self.node_lookup:
             log.debug('[SC] drop_node: Node does not exist; skipping.')
-            return
 
         log.debug("[SC] Dropping node '%s'", node_id)
-        with self.lock:
-            node = self.node_lookup[node_id]
-            env_id = node.environment_id
-            self.environments[env_id] = list(
-                i for i in self.environments[env_id]
-                if i.id != node_id)
-            del self.node_lookup[node_id]
-            log.debug("[SC] Done - '%r'", self)
+        chef.Node(self.node_name(
+        log.debug("[SC] Done - '%r'", self)
 
     def create_environment(self, environment_id):
         log.debug("[SC] Creating environment '%s'", environment_id)
