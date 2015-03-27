@@ -19,6 +19,7 @@ setuptools.setup(
     install_requires=[
         'argparse',
         'PyYAML',
+        'pychef',
         'OCCO-Util',
         'OCCO-InfoBroker',
     ]
