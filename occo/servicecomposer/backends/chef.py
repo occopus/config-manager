@@ -27,7 +27,7 @@ class ChefServiceComposer(ServiceComposer):
     def role_name(self, node):
         return '{environment_id}_{name}'.format(**node)
     def node_name(self, node):
-        return '{environment_id}_{name}_{id}'.format(**node)
+        return '{node_id}'.format(**node)
     def bootstrap_recipe_name(self):
         return 'recipe[connect]'
 
