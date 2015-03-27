@@ -43,12 +43,22 @@ class ChefServiceComposer(ServiceComposer):
             log.info('Registering role %r', role)
             chef.Role(role, api=self.chefapi).save()
 
+    def cond_prepend(lst, item):
+        if not item in lst:
+            lst.insert(0, item)
+
     def assemble_run_list(self, node):
-        bootstrap_recipe = self.bootstrap_recipe_name()
         run_list = node['run_list']
-        if not bootstrap_recipe in run_list:
-            run_list.insert(0, bootstrap_recipe)
+        self.cond_prepend(run_list, self.bootstrap_recipe_name())
+        self.cond_prepend(run_list, self.role_name(node))
         return run_list
+
+    def assemble_attributes(self, node, dest_node):
+        for key, attributes in node['attributes']:
+            a = chef.NodeAttributes()
+            for k, v in attributes:
+                a.set_dotted(k, v)
+            setattr(dest_node, key, a)
 
     def register_node(self, node):
         log.info("[SC] Registering node: %r", node['name'])
@@ -56,10 +66,13 @@ class ChefServiceComposer(ServiceComposer):
         self.ensure_role(node)
 
         n = chef.Node(self.node_name(node), api=self.chefapi)
+        n.chef_environment = node['environment_id']
         n.run_list = self.assemble_run_list(node)
-        
+        self.assemble_attributes(node, n)
+        n.save()
 
         log.debug("[SC] Done", self)
+
     def drop_node(self, instance_data):
         node_id = instance_data['instance_id']
         if not node_id in self.node_lookup:
