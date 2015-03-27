@@ -15,20 +15,26 @@ __all__  = [ 'ChefServiceComposer' ]
 from occo.servicecomposer import ServiceComposer
 import occo.util.factory as factory
 import logging
-import threading
+import chef
 
 log = logging.getLogger('occo.servicecomposer')
 
 @factory.register(ServiceComposer, 'chef')
 class ChefServiceComposer(ServiceComposer):
-    def __init__(self):
-        self.environments = dict()
-        self.node_lookup = dict()
-        import occo.infobroker as ib
-        self.ib = ib.main_info_broker
-        self.lock = threading.RLock()
+    def __init__(self, **backend_config):
+        self.chefapi = chef.ChefAPI(**backend_config)
+
+    def register_role(self, node):
+        roles = chef.Role.list(api=self.chefapi)
+        return roles
+
     def register_node(self, node):
         log.debug("[SC] Registering node: %r", node['name'])
+
+        self.register_role(node)
+        role = chef.Role(node['name'])
+        n = chef.Node(node['id'], api=self.chefapi)
+        n.run_list = []
         with self.lock:
             envid = node['environment_id']
 
@@ -58,17 +64,18 @@ class ChefServiceComposer(ServiceComposer):
 
     def create_environment(self, environment_id):
         log.debug("[SC] Creating environment '%s'", environment_id)
-        with self.lock:
-            self.environments.setdefault(environment_id, dict())
-            log.debug("[SC] Done - '%r'", self)
+        chef.Environment(envinroment_id, api=self.chefapi).save()
+        log.debug("[SC] Done")
+
     def drop_environment(self, environment_id):
-        if not environment_id in self.environments:
-            log.debug('[SC] drop_environment: Environment does not exist; skipping.')
-            return
         log.debug("[SC] Dropping environment '%s'", environment_id)
-        with self.lock:
-            del self.environments[environment_id]
-            log.debug("[SC] Done - '%r'", self)
+        try:
+            chef.Environment(environment_id, api=self.chefapi).delete()
+            log.debug("[SC] Done")
+        except Exception as ex:
+            log.exception('Error dropping environment:')
+            log.info('[SC] drop_environment failed - ignoring.')
+
     def get_node_state(self, instance_data):
         node_id = instance_data['node_id']
         log.debug("[SC] Querying node state for '%s'", node_id)
