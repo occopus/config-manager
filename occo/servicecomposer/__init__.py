@@ -48,7 +48,7 @@ class DummyServiceComposer(ServiceComposer):
                 self.create_environment(envid)
 
             self.environments[envid].setdefault(node['name'], list()).append(node)
-            self.node_lookup[node['id']] = node
+            self.node_lookup[node['node_id']] = node
             log.debug("[SC] Done - '%r'", self)
     def drop_node(self, instance_data):
         node_id = instance_data['instance_id']
