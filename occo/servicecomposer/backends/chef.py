@@ -46,7 +46,7 @@ class ChefServiceComposer(ServiceComposer):
             log.info('Registering role %r', role)
             chef.Role(role, api=self.chefapi).save()
 
-    def cond_prepend(lst, item):
+    def cond_prepend(self, lst, item):
         if not item in lst:
             lst.insert(0, item)
 
