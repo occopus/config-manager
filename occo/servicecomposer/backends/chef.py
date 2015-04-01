@@ -74,10 +74,8 @@ class ChefServiceComposer(ServiceComposer):
         log.debug("[SC] Done", self)
 
     def drop_node(self, instance_data):
-            log.debug('[SC] drop_node: Node does not exist; skipping.')
-
         log.debug("[SC] Dropping node '%s'", node_id)
-        chef.Node(self.node_name(
+        chef.Node(self.node_name(instance_data)).delete()
         log.debug("[SC] Done - '%r'", self)
 
     def create_environment(self, environment_id):
