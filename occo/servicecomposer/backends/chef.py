@@ -31,6 +31,9 @@ class ChefServiceComposer(ServiceComposer):
     def bootstrap_recipe_name(self):
         return 'recipe[connect]'
 
+    def list_environments(self):
+        return list(chef.Environment.list(api=self.chefapi))
+
     def list_roles(self):
         return list(chef.Role.list(api=self.chefapi))
 
@@ -77,6 +80,9 @@ class ChefServiceComposer(ServiceComposer):
         log.debug("[SC] Dropping node '%s'", node_id)
         chef.Node(self.node_name(instance_data)).delete()
         log.debug("[SC] Done - '%r'", self)
+
+    def environment_exists(self, environment_id):
+        return environment_id in self.list_environments()
 
     def create_environment(self, environment_id):
         log.debug("[SC] Creating environment '%s'", environment_id)
