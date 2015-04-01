@@ -86,7 +86,7 @@ class ChefServiceComposer(ServiceComposer):
 
     def create_environment(self, environment_id):
         log.debug("[SC] Creating environment '%s'", environment_id)
-        chef.Environment(envinroment_id, api=self.chefapi).save()
+        chef.Environment(environment_id, api=self.chefapi).save()
         log.debug("[SC] Done")
 
     def drop_environment(self, environment_id):
