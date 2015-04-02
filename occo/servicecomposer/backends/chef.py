@@ -101,11 +101,16 @@ class ChefServiceComposer(ServiceComposer):
     def get_node_state(self, instance_data):
         node_id = instance_data['node_id']
         log.debug("[SC] Querying node state for '%s'", node_id)
-        with self.lock:
-            node = self.node_lookup.get(node_id, None)
-            state = 'ready' if node else 'unknown'
-            log.debug("[SC] Done - '%s'", state)
-        return state
+        if node_id in chef.Node.list(api=self.chefapi):
+            raise NotImplementedError()
+            node = chef.Node(node_id, api=self.chefapi)
+            try:
+                if 'ohai_time' in node.attributes:
+                    return 'ready'
+                else:
+                    return 'pending'
+            except KeyError:
+                return 'unknown'
     def get_node_attribute(self, node_id, attribute):
         attrspec = attribute \
             if hasattr(attribute, '__iter__') \
