@@ -75,7 +75,7 @@ class ChefServiceComposer(ServiceComposer):
         self.assemble_attributes(node, n)
         n.save()
 
-        log.debug("[SC] Done", self)
+        log.debug("[SC] Done")
 
     def drop_node(self, instance_data):
         log.debug("[SC] Dropping node '%s'", node_id)
