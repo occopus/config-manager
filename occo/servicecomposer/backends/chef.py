@@ -129,8 +129,13 @@ class ChefServiceComposer(ServiceComposer):
                 return 'unknown'
 
     def get_node_attribute(self, node_id, attribute):
-        attrspec = attribute \
-            if hasattr(attribute, '__iter__') \
-            else attribute.split('.')
-        return '{{{{{0}{1}}}}}'.format(node_id,
-                               ''.join('[{0}]'.format(i) for i in attrspec))
+        node = chef.Node(node_id, api=self.chefapi)
+        dotted_attr = \
+            attribute if type(attribute) is str \
+            else '.'.join(attribute) if hasattr(attribute, '__iter__') \
+            else util.f_raise(TypeError(
+                'Unknown attribute specification: {0}'.format(attribute)))
+        try:
+            return node.attributes.get_dotted(dotted_attr)
+        except KeyError:
+            raise KeyError('Unresolved node attribute: %s', dotted_attr)
