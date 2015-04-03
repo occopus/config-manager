@@ -16,6 +16,7 @@ from occo.servicecomposer import ServiceComposer
 import occo.util.factory as factory
 import logging
 import chef
+from chef.exceptions import ChefServerNotFoundError
 
 log = logging.getLogger('occo.servicecomposer')
 
@@ -98,12 +99,22 @@ class ChefServiceComposer(ServiceComposer):
             log.exception('Error dropping environment:')
             log.info('[SC] drop_environment failed - ignoring.')
 
+    def chef_exists(self, chef_object):
+        try:
+            self.chefapi.api_request('GET', chef_object.url, data=chef_object)
+            return True
+        except ChefServerNotFoundError:
+            return False
+
+    def chef_node_exists(self, node_name):
+        node = chef.Node(node_name, api=self.chefapi)
+        return self.chef_exists(node)
+
     def get_node_state(self, instance_data):
         node_id = instance_data['node_id']
         log.debug("[SC] Querying node state for '%s'", node_id)
-        if node_id in chef.Node.list(api=self.chefapi):
-            raise NotImplementedError()
-            node = chef.Node(node_id, api=self.chefapi)
+        node = chef.Node(node_id, api=self.chefapi)
+        if self.chef_exists(node):
             try:
                 if 'ohai_time' in node.attributes:
                     return 'ready'
