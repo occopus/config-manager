@@ -52,6 +52,10 @@ class ChefServiceComposer(ServiceComposer):
             lst.insert(0, item)
 
     def assemble_run_list(self, node):
+        """
+        .. todo:: This must not be done here. Instead, this belongs to node
+            resolution.
+        """
         run_list = node['run_list']
         self.cond_prepend(run_list, self.bootstrap_recipe_name())
         self.cond_prepend(run_list, self.role_name(node))
@@ -78,9 +82,10 @@ class ChefServiceComposer(ServiceComposer):
         log.debug("[SC] Done")
 
     def drop_node(self, instance_data):
+        node_id = self.node_name(instance_data)
         log.debug("[SC] Dropping node '%s'", node_id)
-        chef.Node(self.node_name(instance_data)).delete()
-        log.debug("[SC] Done - '%r'", self)
+        chef.Node(node_id).delete()
+        log.debug("[SC] Done")
 
     def environment_exists(self, environment_id):
         return environment_id in self.list_environments()
@@ -122,16 +127,10 @@ class ChefServiceComposer(ServiceComposer):
                     return 'pending'
             except KeyError:
                 return 'unknown'
+
     def get_node_attribute(self, node_id, attribute):
         attrspec = attribute \
             if hasattr(attribute, '__iter__') \
             else attribute.split('.')
         return '{{{{{0}{1}}}}}'.format(node_id,
                                ''.join('[{0}]'.format(i) for i in attrspec))
-    def __repr__(self):
-        log.info('%r', self.environments)
-        nodelist_repr = lambda nodelist: ', '.join(repr(n) for n in nodelist)
-        envlist_repr = list(
-            '%s:[%s]'%(k, nodelist_repr(v))
-            for (k, v) in self.environments.iteritems())
-        return ' '.join(envlist_repr)
