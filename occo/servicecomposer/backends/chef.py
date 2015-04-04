@@ -123,13 +123,12 @@ class ChefServiceComposer(ServiceComposer):
         log.debug("[SC] Querying node state for '%s'", node_id)
         node = chef.Node(node_id, api=self.chefapi)
         if self.chef_exists(node):
-            try:
-                if 'ohai_time' in node.attributes:
-                    return 'ready'
-                else:
-                    return 'pending'
-            except KeyError:
-                return 'unknown'
+            if 'ohai_time' in node.attributes:
+                return 'ready'
+            else:
+                return 'pending'
+        else:
+            return 'unknown'
 
     def get_node_attribute(self, node_id, attribute):
         node = chef.Node(node_id, api=self.chefapi)
