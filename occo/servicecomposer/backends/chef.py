@@ -13,6 +13,7 @@ from __future__ import absolute_import
 __all__  = [ 'ChefServiceComposer' ]
 
 from occo.servicecomposer import ServiceComposer
+import occo.util as util
 import occo.util.factory as factory
 import logging
 import chef
@@ -22,7 +23,8 @@ log = logging.getLogger('occo.servicecomposer')
 
 @factory.register(ServiceComposer, 'chef')
 class ChefServiceComposer(ServiceComposer):
-    def __init__(self, **backend_config):
+    def __init__(self, dry_run=False, **backend_config):
+        self.dry_run = dry_run
         self.chefapi = chef.ChefAPI(**backend_config)
 
     def role_name(self, node):
@@ -115,6 +117,7 @@ class ChefServiceComposer(ServiceComposer):
         node = chef.Node(node_name, api=self.chefapi)
         return self.chef_exists(node)
 
+    @util.wet_method('ready')
     def get_node_state(self, instance_data):
         node_id = instance_data['node_id']
         log.debug("[SC] Querying node state for '%s'", node_id)
