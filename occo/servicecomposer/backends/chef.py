@@ -60,7 +60,7 @@ class ChefServiceComposer(ServiceComposer):
         """
         run_list = node['run_list']
         self.cond_prepend(run_list, self.bootstrap_recipe_name())
-        self.cond_prepend(run_list, self.role_name(node))
+        self.cond_prepend(run_list, 'role[{0}]'.format(self.role_name(node)))
         return run_list
 
     def assemble_attributes(self, node, dest_node):
