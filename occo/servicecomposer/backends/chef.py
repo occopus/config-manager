@@ -64,9 +64,9 @@ class ChefServiceComposer(ServiceComposer):
         return run_list
 
     def assemble_attributes(self, node, dest_node):
-        for key, attributes in node['attributes']:
-            a = chef.NodeAttributes()
-            for k, v in attributes:
+        for key, attributes in node['attributes'].iteritems():
+            a = chef.node.NodeAttributes()
+            for k, v in attributes.iteritems():
                 a.set_dotted(k, v)
             setattr(dest_node, key, a)
 
