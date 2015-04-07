@@ -63,12 +63,9 @@ class ChefServiceComposer(ServiceComposer):
         self.cond_prepend(run_list, 'role[{0}]'.format(self.role_name(node)))
         return run_list
 
-    def assemble_attributes(self, node, dest_node):
-        for key, attributes in node['attributes'].iteritems():
-            a = chef.node.NodeAttributes()
-            for k, v in attributes.iteritems():
-                a.set_dotted(k, v)
-            setattr(dest_node, key, a)
+    def assemble_attributes(self, node, dest_attrs):
+        for k, v in node['attributes'].iteritems():
+            dest_attrs.set_dotted(k, v)
 
     def register_node(self, node):
         log.info("[SC] Registering node: %r", node['name'])
@@ -78,7 +75,7 @@ class ChefServiceComposer(ServiceComposer):
         n = chef.Node(self.node_name(node), api=self.chefapi)
         n.chef_environment = node['environment_id']
         n.run_list = self.assemble_run_list(node)
-        self.assemble_attributes(node, n)
+        self.assemble_attributes(node, n.normal)
         n.save()
 
         log.debug("[SC] Done")
