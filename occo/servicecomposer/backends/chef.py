@@ -130,6 +130,7 @@ class ChefServiceComposer(ServiceComposer):
         else:
             return 'unknown'
 
+    @util.wet_method('dummy-value')
     def get_node_attribute(self, node_id, attribute):
         node = chef.Node(node_id, api=self.chefapi)
         dotted_attr = \
