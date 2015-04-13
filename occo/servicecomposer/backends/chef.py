@@ -81,6 +81,11 @@ class ChefServiceComposer(ServiceComposer):
         log.debug("[SC] Done")
 
     def drop_node(self, instance_data):
+        """
+        Delete a node and all associated data from the chef server.
+
+        .. todo:: Delete the generated client too.
+        """
         node_id = self.node_name(instance_data)
         log.debug("[SC] Dropping node '%s'", node_id)
         chef.Node(node_id).delete()
@@ -95,6 +100,12 @@ class ChefServiceComposer(ServiceComposer):
         log.debug("[SC] Done")
 
     def drop_environment(self, environment_id):
+        """
+        Delete the environment and associated data.
+
+        .. todo:: Must delete associated roles too.
+
+        """
         log.debug("[SC] Dropping environment '%s'", environment_id)
         try:
             chef.Environment(environment_id, api=self.chefapi).delete()
