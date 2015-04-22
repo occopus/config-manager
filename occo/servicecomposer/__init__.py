@@ -93,6 +93,10 @@ class DummyServiceComposer(ServiceComposer):
             else attribute.split('.')
         return '{{{{{0}{1}}}}}'.format(node_id,
                                ''.join('[{0}]'.format(i) for i in attrspec))
+
+    def environment_exists(self, environment_id):
+        return environment_id in self.environments
+
     def __repr__(self):
         log.info('%r', self.environments)
         nodelist_repr = lambda nodelist: ', '.join(repr(n) for n in nodelist)
