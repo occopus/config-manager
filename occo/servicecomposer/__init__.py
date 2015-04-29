@@ -98,7 +98,6 @@ class DummyServiceComposer(ServiceComposer):
         return environment_id in self.environments
 
     def __repr__(self):
-        log.info('%r', self.environments)
         nodelist_repr = lambda nodelist: ', '.join(repr(n) for n in nodelist)
         envlist_repr = list(
             '%s:[%s]'%(k, nodelist_repr(v))
