@@ -13,15 +13,24 @@ __import__('pkg_resources').declare_namespace(__name__)
 __all__  = [ 'ServiceComposer' ]
 
 import occo.util.factory as factory
+import occo.infobroker as ib
 import logging
 
 log = logging.getLogger('occo.servicecomposer')
 
-class ServiceComposer(factory.MultiBackend):
+@ib.provider
+class ServiceComposer(factory.MultiBackend, ib.InfoProvider):
     """Abstract interface of a service composer.
 
     .. todo:: Service Composer documentation.
     """
+
+    @ib.provides('node.service.state')
+    def service_status(self, instance_data):
+        return self.get_node_state(instance_data)
+
+    def get_node_state(self, instance_data):
+        raise NotImplementedError()
 
 import threading
 
