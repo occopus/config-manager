@@ -17,8 +17,6 @@ setuptools.setup(
     description='OCCO Service Composer',
     long_description=open('README.txt').read(),
     install_requires=[
-        'argparse',
-        'PyYAML',
         'pychef',
         'OCCO-Util',
         'OCCO-InfoBroker',

@@ -4,6 +4,8 @@ occo_test/drop_nodes.yaml
 # Do not store authentication data in the VCS
 *auth_data*
 
+wheelhouse
+
 # Vi swap file
 *.swp
 
