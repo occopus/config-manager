@@ -142,7 +142,7 @@ class ChefServiceComposer(ServiceComposer):
     def get_node_attribute(self, node_id, attribute):
         node = chef.Node(node_id, api=self.chefapi)
         dotted_attr = \
-            attribute if type(attribute) is str \
+            attribute if isinstance(attribute, basestring) \
             else '.'.join(attribute) if hasattr(attribute, '__iter__') \
             else util.f_raise(TypeError(
                 'Unknown attribute specification: {0}'.format(attribute)))
