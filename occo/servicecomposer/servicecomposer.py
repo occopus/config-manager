@@ -44,17 +44,18 @@ class DummyServiceComposer(ServiceComposer):
         import occo.infobroker as ib
         self.ib = ib.main_info_broker
         self.lock = threading.RLock()
+
     def register_node(self, node):
         log.debug("[SC] Registering node: %r", node['name'])
         with self.lock:
-            envid = node['environment_id']
+            infra_id = node['infra_id']
 
             # Implicitly create an environment for individual nodes.
             # (May not be useful for real SCs!)
-            if not envid in self.environments:
-                self.create_environment(envid)
+            if not infra_id in self.environments:
+                self.create_infrastructure(infra_id)
 
-            self.environments[envid].setdefault(node['name'], list()).append(node)
+            self.environments[infra_id].setdefault(node['name'], list()).append(node)
             self.node_lookup[node['node_id']] = node
             log.debug("[SC] Done - '%r'", self)
     def drop_node(self, instance_data):
@@ -66,25 +67,25 @@ class DummyServiceComposer(ServiceComposer):
         log.debug("[SC] Dropping node '%s'", node_id)
         with self.lock:
             node = self.node_lookup[node_id]
-            env_id = node.environment_id
-            self.environments[env_id] = list(
-                i for i in self.environments[env_id]
+            infra_id = node.infra_id
+            self.environments[infra_id] = list(
+                i for i in self.environments[infra_id]
                 if i.id != node_id)
             del self.node_lookup[node_id]
             log.debug("[SC] Done - '%r'", self)
 
-    def create_environment(self, environment_id):
-        log.debug("[SC] Creating environment '%s'", environment_id)
+    def create_infrastructure(self, infra_id):
+        log.debug("[SC] Creating infrastructure '%s'", infra_id)
         with self.lock:
-            self.environments.setdefault(environment_id, dict())
+            self.environments.setdefault(infra_id, dict())
             log.debug("[SC] Done - '%r'", self)
-    def drop_environment(self, environment_id):
-        if not environment_id in self.environments:
-            log.debug('[SC] drop_environment: Environment does not exist; skipping.')
+    def drop_infrastructure(self, infra_id):
+        if not infra_id in self.environments:
+            log.debug('[SC] drop_infrastructure: Infrastructure does not exist; skipping.')
             return
-        log.debug("[SC] Dropping environment '%s'", environment_id)
+        log.debug("[SC] Dropping infrastructure '%s'", infra_id)
         with self.lock:
-            del self.environments[environment_id]
+            del self.environments[infra_id]
             log.debug("[SC] Done - '%r'", self)
     def get_node_state(self, instance_data):
         node_id = instance_data['node_id']
@@ -101,8 +102,8 @@ class DummyServiceComposer(ServiceComposer):
         return '{{{{{0}{1}}}}}'.format(node_id,
                                ''.join('[{0}]'.format(i) for i in attrspec))
 
-    def environment_exists(self, environment_id):
-        return environment_id in self.environments
+    def infrastructure_exists(self, infra_id):
+        return infra_id in self.environments
 
     def __repr__(self):
         nodelist_repr = lambda nodelist: ', '.join(repr(n) for n in nodelist)

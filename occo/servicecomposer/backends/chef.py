@@ -28,7 +28,7 @@ class ChefServiceComposer(ServiceComposer):
         self.chefapi = chef.ChefAPI(**backend_config)
 
     def role_name(self, node):
-        return '{environment_id}_{name}'.format(**node)
+        return '{infra_id}_{name}'.format(**node)
     def node_name(self, node):
         return '{node_id}'.format(**node)
     def bootstrap_recipe_name(self):
@@ -73,7 +73,7 @@ class ChefServiceComposer(ServiceComposer):
         self.ensure_role(node)
 
         n = chef.Node(self.node_name(node), api=self.chefapi)
-        n.chef_environment = node['environment_id']
+        n.chef_environment = node['infra_id']
         n.run_list = self.assemble_run_list(node)
         self.assemble_attributes(node, n.normal)
         n.save()
@@ -91,28 +91,28 @@ class ChefServiceComposer(ServiceComposer):
         chef.Node(node_id).delete()
         log.debug("[SC] Done")
 
-    def environment_exists(self, environment_id):
-        return environment_id in self.list_environments()
+    def infrastructure_exists(self, infra_id):
+        return infra_id in self.list_environments()
 
-    def create_environment(self, environment_id):
-        log.debug("[SC] Creating environment '%s'", environment_id)
-        chef.Environment(environment_id, api=self.chefapi).save()
+    def create_infrastructure(self, infra_id):
+        log.debug("[SC] Creating environment '%s'", infra_id)
+        chef.Environment(infra_id, api=self.chefapi).save()
         log.debug("[SC] Done")
 
-    def drop_environment(self, environment_id):
+    def drop_infrastructure(self, infra_id):
         """
         Delete the environment and associated data.
 
         .. todo:: Must delete associated roles too.
 
         """
-        log.debug("[SC] Dropping environment '%s'", environment_id)
+        log.debug("[SC] Dropping environment '%s'", infra_id)
         try:
-            chef.Environment(environment_id, api=self.chefapi).delete()
+            chef.Environment(infra_id, api=self.chefapi).delete()
             log.debug("[SC] Done")
         except Exception as ex:
             log.exception('Error dropping environment:')
-            log.info('[SC] drop_environment failed - ignoring.')
+            log.info('[SC] drop_infrastructure failed - ignoring.')
 
     def chef_exists(self, chef_object):
         try:
