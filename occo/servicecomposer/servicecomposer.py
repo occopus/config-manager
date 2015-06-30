@@ -45,19 +45,25 @@ class DummyServiceComposer(ServiceComposer):
         self.ib = ib.main_info_broker
         self.lock = threading.RLock()
 
-    def register_node(self, node):
-        log.debug("[SC] Registering node: %r", node['name'])
+    def register_node(self, resolved_node_definition):
+        log.debug("[SC] Registering node: %r", resolved_node_definition['name'])
         with self.lock:
-            infra_id = node['infra_id']
+            infra_id = resolved_node_definition['infra_id']
 
             # Implicitly create an environment for individual nodes.
             # (May not be useful for real SCs!)
             if not infra_id in self.environments:
+                log.debug(
+                    '[SC] Implicitly creating an environment %r for node %r',
+                    infra_id, resolved_node_definition['name'])
                 self.create_infrastructure(infra_id)
 
-            self.environments[infra_id].setdefault(node['name'], list()).append(node)
-            self.node_lookup[node['node_id']] = node
+            env = self.environments[infra_id].setdefault(
+                resolved_node_definition['name'], list())
+            env.append(resolved_node_definition)
+            self.node_lookup[resolved_node_definition['node_id']] = node
             log.debug("[SC] Done - '%r'", self)
+
     def drop_node(self, instance_data):
         node_id = instance_data['instance_id']
         if not node_id in self.node_lookup:
@@ -79,6 +85,7 @@ class DummyServiceComposer(ServiceComposer):
         with self.lock:
             self.environments.setdefault(infra_id, dict())
             log.debug("[SC] Done - '%r'", self)
+
     def drop_infrastructure(self, infra_id):
         if not infra_id in self.environments:
             log.debug('[SC] drop_infrastructure: Infrastructure does not exist; skipping.')
@@ -87,6 +94,7 @@ class DummyServiceComposer(ServiceComposer):
         with self.lock:
             del self.environments[infra_id]
             log.debug("[SC] Done - '%r'", self)
+
     def get_node_state(self, instance_data):
         node_id = instance_data['node_id']
         log.debug("[SC] Querying node state for '%s'", node_id)
@@ -95,6 +103,7 @@ class DummyServiceComposer(ServiceComposer):
             state = 'ready' if node else 'unknown'
             log.debug("[SC] Done - '%s'", state)
         return state
+
     def get_node_attribute(self, node_id, attribute):
         attrspec = attribute \
             if hasattr(attribute, '__iter__') \

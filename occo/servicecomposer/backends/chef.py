@@ -27,10 +27,10 @@ class ChefServiceComposer(ServiceComposer):
         self.dry_run = dry_run
         self.chefapi = chef.ChefAPI(**backend_config)
 
-    def role_name(self, node):
-        return '{infra_id}_{name}'.format(**node)
-    def node_name(self, node):
-        return '{node_id}'.format(**node)
+    def role_name(self, resolved_node_definition):
+        return '{infra_id}_{name}'.format(**resolved_node_definition)
+    def node_name(self, resolved_node_definition):
+        return '{node_id}'.format(**resolved_node_definition)
     def bootstrap_recipe_name(self):
         return 'recipe[connect]'
 
@@ -40,9 +40,9 @@ class ChefServiceComposer(ServiceComposer):
     def list_roles(self):
         return list(chef.Role.list(api=self.chefapi))
 
-    def ensure_role(self, node):
+    def ensure_role(self, resolved_node_definition):
         roles = self.list_roles()
-        role = self.role_name(node)
+        role = self.role_name(resolved_node_definition)
         if role in roles:
             log.debug('Role %r already exists', role)
         else:
@@ -53,29 +53,31 @@ class ChefServiceComposer(ServiceComposer):
         if not item in lst:
             lst.insert(0, item)
 
-    def assemble_run_list(self, node):
+    def assemble_run_list(self, resolved_node_definition):
         """
         .. todo:: This must not be done here. Instead, this belongs to node
             resolution.
         """
-        run_list = node['run_list']
+        run_list = resolved_node_definition['run_list']
         self.cond_prepend(run_list, self.bootstrap_recipe_name())
-        self.cond_prepend(run_list, 'role[{0}]'.format(self.role_name(node)))
+        self.cond_prepend(
+            run_list, 'role[{0}]'.format(self.role_name(resolved_node_definition)))
         return run_list
 
-    def assemble_attributes(self, node, dest_attrs):
-        for k, v in node['attributes'].iteritems():
+    def assemble_attributes(self, resolved_node_definition, dest_attrs):
+        for k, v in resolved_node_definition['attributes'].iteritems():
             dest_attrs.set_dotted(k, v)
 
-    def register_node(self, node):
-        log.info("[SC] Registering node: %r", node['name'])
+    def register_node(self, resolved_node_definition):
+        log.info("[SC] Registering node: %r", resolved_node_definition['name'])
 
-        self.ensure_role(node)
+        self.ensure_role(resolved_node_definition)
 
-        n = chef.Node(self.node_name(node), api=self.chefapi)
-        n.chef_environment = node['infra_id']
-        n.run_list = self.assemble_run_list(node)
-        self.assemble_attributes(node, n.normal)
+        n = chef.Node(self.node_name(resolved_node_definition),
+                      api=self.chefapi)
+        n.chef_environment = resolved_node_definition['infra_id']
+        n.run_list = self.assemble_run_list(resolved_node_definition)
+        self.assemble_attributes(resolved_node_definition, n.normal)
         n.save()
 
         log.debug("[SC] Done")
