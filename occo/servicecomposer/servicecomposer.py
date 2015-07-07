@@ -61,7 +61,7 @@ class DummyServiceComposer(ServiceComposer):
             env = self.environments[infra_id].setdefault(
                 resolved_node_definition['name'], list())
             env.append(resolved_node_definition)
-            self.node_lookup[resolved_node_definition['node_id']] = node
+            self.node_lookup[resolved_node_definition['node_id']] = resolved_node_definition
             log.debug("[SC] Done - '%r'", self)
 
     def drop_node(self, instance_data):
