@@ -19,7 +19,7 @@ import logging
 import chef
 from chef.exceptions import ChefServerNotFoundError
 
-import oco.util.constants.status as status
+import occo.constants.status as status
 
 log = logging.getLogger('occo.servicecomposer')
 
