@@ -19,6 +19,8 @@ import logging
 import chef
 from chef.exceptions import ChefServerNotFoundError
 
+import oco.util.constants.status as status
+
 log = logging.getLogger('occo.servicecomposer')
 
 @factory.register(ServiceComposer, 'chef')
@@ -134,11 +136,11 @@ class ChefServiceComposer(ServiceComposer):
         node = chef.Node(node_id, api=self.chefapi)
         if self.chef_exists(node):
             if 'ohai_time' in node.attributes:
-                return 'ready'
+                return status.READY
             else:
-                return 'pending'
+                return status.PENDING
         else:
-            return 'unknown'
+            return status.UNKNOWN
 
     @util.wet_method('dummy-value')
     def get_node_attribute(self, node_id, attribute):
