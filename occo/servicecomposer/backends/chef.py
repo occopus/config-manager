@@ -92,8 +92,12 @@ class ChefServiceComposer(ServiceComposer):
         """
         node_id = self.node_name(instance_data)
         log.debug("[SC] Dropping node '%s'", node_id)
-        chef.Node(node_id).delete()
-        log.debug("[SC] Done")
+        try:
+            chef.Node(node_id).delete()
+            log.debug("[SC] Done")
+        except Exception as ex:
+            log.exception('Error dropping node:')
+            log.info('[SC] Dropping node failed - ignoring.')
 
     def infrastructure_exists(self, infra_id):
         return infra_id in self.list_environments()
@@ -107,9 +111,18 @@ class ChefServiceComposer(ServiceComposer):
         """
         Delete the environment and associated data.
 
-        .. todo:: Must delete associated roles too.
-
         """
+        filter = '{0}_'.format(infra_id)
+        for role in self.list_roles():
+            if role.startswith(filter):
+                log.debug("[SC] Removing role: '%s'",role)
+                try:
+                    chef.Role(role, api=self.chefapi).delete()
+                    log.debug("[SC] Done")
+                except Exception as ex:
+                    log.exception('Error removing role:')
+                    log.info('[SC] Removing role failed - ignoring.')
+
         log.debug("[SC] Dropping environment '%s'", infra_id)
         try:
             chef.Environment(infra_id, api=self.chefapi).delete()
