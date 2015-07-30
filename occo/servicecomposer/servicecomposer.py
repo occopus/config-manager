@@ -117,6 +117,6 @@ class DummyServiceComposer(ServiceComposer):
     def __repr__(self):
         nodelist_repr = lambda nodelist: ', '.join(repr(n) for n in nodelist)
         envlist_repr = list(
-            '%s:[%s]'%(k, nodelist_repr(v))
+            '{0}:[{1}]'.format(k, nodelist_repr(v))
             for (k, v) in self.environments.iteritems())
         return ' '.join(envlist_repr)
