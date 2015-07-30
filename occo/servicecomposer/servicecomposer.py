@@ -70,7 +70,7 @@ class DummyServiceComposer(ServiceComposer):
             log.debug('[SC] drop_node: Node does not exist; skipping.')
             return
 
-        log.debug("[SC] Dropping node '%s'", node_id)
+        log.debug("[SC] Dropping node %r", node_id)
         with self.lock:
             node = self.node_lookup[node_id]
             infra_id = node.infra_id
@@ -81,7 +81,7 @@ class DummyServiceComposer(ServiceComposer):
             log.debug("[SC] Done - '%r'", self)
 
     def create_infrastructure(self, infra_id):
-        log.debug("[SC] Creating infrastructure '%s'", infra_id)
+        log.debug("[SC] Creating infrastructure %r", infra_id)
         with self.lock:
             self.environments.setdefault(infra_id, dict())
             log.debug("[SC] Done - '%r'", self)
@@ -90,18 +90,18 @@ class DummyServiceComposer(ServiceComposer):
         if not infra_id in self.environments:
             log.debug('[SC] drop_infrastructure: Infrastructure does not exist; skipping.')
             return
-        log.debug("[SC] Dropping infrastructure '%s'", infra_id)
+        log.debug("[SC] Dropping infrastructure %r", infra_id)
         with self.lock:
             del self.environments[infra_id]
             log.debug("[SC] Done - '%r'", self)
 
     def get_node_state(self, instance_data):
         node_id = instance_data['node_id']
-        log.debug("[SC] Querying node state for '%s'", node_id)
+        log.debug("[SC] Querying node state for %r", node_id)
         with self.lock:
             node = self.node_lookup.get(node_id, None)
             state = 'ready' if node else 'unknown'
-            log.debug("[SC] Done - '%s'", state)
+            log.debug("[SC] Done - %r", state)
         return state
 
     def get_node_attribute(self, node_id, attribute):

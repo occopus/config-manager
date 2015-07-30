@@ -91,7 +91,7 @@ class ChefServiceComposer(ServiceComposer):
         .. todo:: Delete the generated client too.
         """
         node_id = self.node_name(instance_data)
-        log.debug("[SC] Dropping node '%s'", node_id)
+        log.debug("[SC] Dropping node %r", node_id)
         try:
             chef.Node(node_id).delete()
             log.debug("[SC] Done")
@@ -103,7 +103,7 @@ class ChefServiceComposer(ServiceComposer):
         return infra_id in self.list_environments()
 
     def create_infrastructure(self, infra_id):
-        log.debug("[SC] Creating environment '%s'", infra_id)
+        log.debug("[SC] Creating environment %r", infra_id)
         chef.Environment(infra_id, api=self.chefapi).save()
         log.debug("[SC] Done")
 
@@ -115,7 +115,7 @@ class ChefServiceComposer(ServiceComposer):
         filter = '{0}_'.format(infra_id)
         for role in self.list_roles():
             if role.startswith(filter):
-                log.debug("[SC] Removing role: '%s'",role)
+                log.debug("[SC] Removing role: %r", role)
                 try:
                     chef.Role(role, api=self.chefapi).delete()
                     log.debug("[SC] Done")
@@ -123,7 +123,7 @@ class ChefServiceComposer(ServiceComposer):
                     log.exception('Error removing role:')
                     log.info('[SC] Removing role failed - ignoring.')
 
-        log.debug("[SC] Dropping environment '%s'", infra_id)
+        log.debug("[SC] Dropping environment %r", infra_id)
         try:
             chef.Environment(infra_id, api=self.chefapi).delete()
             log.debug("[SC] Done")
@@ -145,7 +145,7 @@ class ChefServiceComposer(ServiceComposer):
     @util.wet_method('ready')
     def get_node_state(self, instance_data):
         node_id = instance_data['node_id']
-        log.debug("[SC] Querying node state for '%s'", node_id)
+        log.debug("[SC] Querying node state for %r", node_id)
         node = chef.Node(node_id, api=self.chefapi)
         if self.chef_exists(node):
             if 'ohai_time' in node.attributes:
