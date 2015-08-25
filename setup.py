@@ -8,11 +8,17 @@ setuptools.setup(
     version='0.1.0',
     author='Adam Visegradi',
     author_email='adam.visegradi@sztaki.mta.hu',
-    namespace_packages=['occo',
-                        'occo.servicecomposer',
-                        'occo.servicecomposer.backends'],
-    py_modules=['occo.servicecomposer.servicecomposer',
-                'occo.servicecomposer.backends.chef'],
+    namespace_packages=[
+        'occo',
+        'occo.plugins',
+        'occo.plugins.servicecomposer',
+    ],
+    packages=[
+        'occo.servicecomposer',
+    ],
+    py_modules=[
+        'occo.plugins.servicecomposer.chef',
+    ],
     scripts=[],
     url='http://www.lpds.sztaki.hu/',
     license='LICENSE.txt',
