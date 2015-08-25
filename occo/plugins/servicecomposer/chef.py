@@ -12,7 +12,7 @@ from __future__ import absolute_import
 
 __all__  = [ 'ChefServiceComposer' ]
 
-from ..servicecomposer import ServiceComposer
+from occo.servicecomposer import ServiceComposer
 import occo.util as util
 import occo.util.factory as factory
 import logging
