@@ -26,7 +26,7 @@ setuptools.setup(
     long_description=open('README.txt').read(),
     install_requires=[
         'pychef',
-        'OCCO-Util',
         'OCCO-InfoBroker',
+        'OCCO-Util',
     ]
 )
