@@ -25,6 +25,11 @@ log = logging.getLogger('occo.servicecomposer')
 
 @factory.register(ServiceComposer, 'chef')
 class ChefServiceComposer(ServiceComposer):
+    """
+    Chef implementation of :class:`occo.servicecomposer.ServiceComposer`.
+
+    .. todo:: Store instance name too so it can be used in logging.
+    """
     def __init__(self, dry_run=False, **backend_config):
         self.dry_run = dry_run
         self.chefapi = chef.ChefAPI(**backend_config)
@@ -37,9 +42,11 @@ class ChefServiceComposer(ServiceComposer):
         return 'recipe[connect]'
 
     def list_environments(self):
+        log.debug('Listing environments')
         return list(chef.Environment.list(api=self.chefapi))
 
     def list_roles(self):
+        log.debug('Listing roles')
         return list(chef.Role.list(api=self.chefapi))
 
     def ensure_role(self, resolved_node_definition):
