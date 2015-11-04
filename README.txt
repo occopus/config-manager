@@ -1,5 +1,3 @@
-===
-OCCO Service Composer
-===
 
-OCCO Service Composer module and daemon
+Occopus Service Composer Module providing service deployment on resource in Occopus.
+
