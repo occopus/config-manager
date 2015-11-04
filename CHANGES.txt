@@ -1,1 +1,4 @@
-v0.1.0 -- Initial release
+
+v0.2.0 - November 2015
+- Implement basic methods and classes
+- Add chef as service composer
