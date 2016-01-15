@@ -1,4 +1,7 @@
 
+v0.3.0 - January 2016
+- make dummy be real dummy
+
 v0.2.0 - November 2015
 - Implement basic methods and classes
 - Add chef as service composer
