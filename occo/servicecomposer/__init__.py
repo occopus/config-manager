@@ -27,117 +27,80 @@ import logging
 
 log = logging.getLogger('occo.servicecomposer')
 
+class Command(object):
+    def __init__(self):
+        pass
+    def perform(self, service_composer):
+        raise NotImplementedError()
+
 @ib.provider
-class ServiceComposer(factory.MultiBackend, ib.InfoProvider):
-    """Abstract interface of a service composer.
+class ServiceComposerProvider(ib.InfoProvider):
+    """Abstract interface of a service composer provider.
 
     .. todo:: Service Composer documentation.
     """
+    def __init__(self, sc, **config):
+        self.__dict__.update(config)
+        self.service_composer = sc
 
     @ib.provides('node.service.state')
     def service_status(self, instance_data):
-        return self.get_node_state(instance_data)
+        return self.service_composer.get_node_state(instance_data)
 
-    def get_node_state(self, instance_data):
+class ServiceComposer(factory.Multibackend):
+    def __init__(self, sc_cfgs):
+        self.sc_cfgs = sc_cfgs
+
+    def cri_register_node(self, resolved_node_definition):
         raise NotImplementedError()
 
-import threading
+    def cri_drop_node(self, instance_data):
+        raise NotImplementedError()
 
-import uuid
-def uid():
-    return str(uuid.uuid4())
+    def cri_get_node_state(self, instance_data):
+        raise NotImplementedError()
 
-@factory.register(ServiceComposer, 'dummy')
-class DummyServiceComposer(ServiceComposer):
-    def __init__(self, name='dummy'):
-        self.name = name
-        self.environments = dict()
-        self.node_lookup = dict()
-        import occo.infobroker as ib
-        self.ib = ib.main_info_broker
-        self.lock = threading.RLock()
+    def cri_create_infrastructure(self, infra_id):
+        raise NotImplementedError()
 
-    @util.wet_method()
+    def cri_drop_infrastructure(self, infra_id):
+        raise NotImplementedError()
+
+    def cri_get_node_attribute(self, node_id, attribute):
+        raise NotImplementedError()
+
+    def cri_infra_exists(self, infra_id):
+        raise NotImplementedError()
+
+    def instantiate_sc(self, data):
+        cfg = self.sc_cfgs[data['service_composer_id']]
+        return ServiceComposer.instantiate(**cfg)
+
     def register_node(self, resolved_node_definition):
-        log.debug("[%s] Registering node: %r", 
-                self.name, resolved_node_definition['name'])
-        with self.lock:
-            infra_id = resolved_node_definition['infra_id']
+        sc = self.instantiate_sc(resolved_node_definition)
+        return sc.cri_register_node(resolved_node_definition).perform(sc)
 
-            # Implicitly create an environment for individual nodes.
-            # (May not be useful for real SCs!)
-            if not infra_id in self.environments:
-                log.debug(
-                    '[%s] Implicitly creating an environment %r for node %r',
-                    self.name, infra_id, resolved_node_definition['name'])
-                self.create_infrastructure(infra_id)
-            
-            env = self.environments[infra_id].setdefault(
-                    resolved_node_definition['name'], list())
-            env.append(resolved_node_definition)
-            self.node_lookup[resolved_node_definition['node_id']] = resolved_node_definition
-            log.debug("[%s] Done - '%r'", self.name, self)
-
-    @util.wet_method()
     def drop_node(self, instance_data):
-        node_id = instance_data['instance_id']
-        if not node_id in self.node_lookup:
-            log.debug('[%s] drop_node: Node does not exist; skipping.',
-                        self.name)
-            return
+        sc = self.instantiate_sc(instance_data)
+        return sc.cri_drop_node(instance_data).perform(sc)
 
-        log.debug("[%s] Dropping node %r", self.name, node_id)
-        with self.lock:
-            node = self.node_lookup[node_id]
-            infra_id = node.infra_id
-            self.environments[infra_id] = list(
-                i for i in self.environments[infra_id]
-                if i.id != node_id)
-            del self.node_lookup[node_id]
-            log.debug("[%s] Done - '%r'", self.name, self)
-
-    @util.wet_method()
-    def create_infrastructure(self, infra_id):
-        log.debug("[%s] Creating infrastructure %r", self.name, infra_id)
-        with self.lock:
-            self.environments.setdefault(infra_id, dict())
-            log.debug("[%s] Done - '%r'", self.name, self)
-
-    @util.wet_method()
-    def drop_infrastructure(self, infra_id):
-        if not infra_id in self.environments:
-            log.debug('[%s] drop_infrastructure: Infrastructure does not exist; skipping.', self.name)
-            return
-        log.debug("[%s] Dropping infrastructure %r", self.name, infra_id)
-        with self.lock:
-            del self.environments[infra_id]
-            log.debug("[%s] Done - '%r'", self.name, self)
-
-    @util.wet_method('ready')
     def get_node_state(self, instance_data):
-        node_id = instance_data['node_id']
-        log.debug("[%s] Querying node state for '%r'", self.name, node_id)
-        with self.lock:
-            node = self.node_lookup.get(node_id, None)
-            state = 'ready' if node else 'unknown'
-            log.debug("[%s] Done - %r", self.name, state)
-        return state
+        sc = self.instantiate_sc(instance_data)
+        return sc.cri_get_node_state(instance_data).perform(sc)
 
-    @util.wet_method('dummy-value')
-    def get_node_attribute(self, node_id, attribute):
-        attrspec = attribute \
-            if hasattr(attribute, '__iter__') \
-            else attribute.split('.')
-        return '{{{{{0}{1}}}}}'.format(node_id,
-                               ''.join('[{0}]'.format(i) for i in attrspec))
+    def create_infrastructure(self, data, infra_id):
+        sc = self.instantiate_sc(data)
+        return sc.cri_create_infrastructure(infra_id).perform(sc)
 
-    @util.wet_method(True)
-    def infrastructure_exists(self, infra_id):
-        return infra_id in self.environments
+    def drop_infrastructure(self, data, infra_id):
+        sc = self.instantiate_sc(data)
+        return sc.cri_drop_infrastructure(infra_id).perform(sc)
 
-    def __repr__(self):
-        nodelist_repr = lambda nodelist: ', '.join(repr(n) for n in nodelist)
-        envlist_repr = list(
-            '{0}:[{1}]'.format(k, nodelist_repr(v))
-            for (k, v) in self.environments.iteritems())
-        return ' '.join(envlist_repr)
+    def infrastructure_exists(self, data, infra_id):
+        sc = self.instantiate_sc(data)
+        return sc.cri_infra_exists(infra_id).perform(sc)
+
+    def get_node_attribute(self, data, node_id, attribute):
+        sc = self.instantiate_sc(data)
+        return sc.cri_get_node_attribute(node_id, attribute).perform(sc)
+
