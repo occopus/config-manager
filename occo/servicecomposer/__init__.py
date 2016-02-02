@@ -18,7 +18,7 @@
 
 """
 
-__all__  = [ 'ServiceComposer' ]
+__all__  = [ 'ServiceComposer', 'ServiceComposerProvider' ]
 
 import occo.util.factory as factory
 import occo.util as util
@@ -50,7 +50,7 @@ class ServiceComposerProvider(ib.InfoProvider):
 class ServiceComposer(factory.Multibackend):
     def __init__(self, sc_cfgs):
         self.sc_cfgs = sc_cfgs
-
+        self.infobroker = ib.main_info_broker
     def cri_register_node(self, resolved_node_definition):
         raise NotImplementedError()
 
@@ -88,19 +88,56 @@ class ServiceComposer(factory.Multibackend):
         sc = self.instantiate_sc(instance_data)
         return sc.cri_get_node_state(instance_data).perform(sc)
 
-    def create_infrastructure(self, data, infra_id):
-        sc = self.instantiate_sc(data)
-        return sc.cri_create_infrastructure(infra_id).perform(sc)
+    def create_infrastructure(self, infra_id):
+        instances = self.infobroker.get('infrastructure.node_instances',
+                                    infra_id, True)
+        sclist = []
+        for node in instances.itervalues():
+            for instance in node.itervalues():
+                sc_id = instance['resolved_node_definition']['service_composer_id']
+                if sc_id not in sclist:
+                    sclist.append(sc_id)
+        for sc_id in sclist:
+            cfg = self.sc_cfgs[sc_id]
+            sc = ServiceComposer.instantiate(**cfg)
+            sc.cri_create_infrastructure(infra_id).perform(sc)
 
-    def drop_infrastructure(self, data, infra_id):
-        sc = self.instantiate_sc(data)
-        return sc.cri_drop_infrastructure(infra_id).perform(sc)
+    def drop_infrastructure(self, infra_id):
+        instances = self.infobroker.get('infrastructure.node_instances',
+                                    infra_id, True)
+        sclist = []
+        for node in instances.itervalues():
+            for instance in node.itervalues():
+                sc_id = instance['resolved_node_definition']['service_composer_id']
+                if sc_id not in sclist:
+                    sclist.append(sc_id)
+        for sc_id in sclist:
+            cfg = self.sc_cfgs[sc_id]
+            sc = ServiceComposer.instantiate(**cfg)
+            sc.cri_drop_infrastructure(infra_id).perform(sc)
 
-    def infrastructure_exists(self, data, infra_id):
-        sc = self.instantiate_sc(data)
-        return sc.cri_infra_exists(infra_id).perform(sc)
+    def infrastructure_exists(self, infra_id):
+        instances = self.infobroker.get('infrastructure.node_instances',
+                                    infra_id, True)
+        sclist = []
+        retval = True
+        for node in instances.itervalues():
+            for instance in node.itervalues():
+                sc_id = instance['resolved_node_definition']['service_composer_id']
+                if sc_id not in sclist:
+                    sclist.append(sc_id)
+        for sc_id in sclist:
+            cfg = self.sc_cfgs[sc_id]
+            sc = ServiceComposer.instantiate(**cfg)
+            retval = sc.cri_infrastructure_exists(infra_id).perform(sc)
+            if retval is False:
+                break
+        return retval
 
-    def get_node_attribute(self, data, node_id, attribute):
-        sc = self.instantiate_sc(data)
+    def get_node_attribute(self, node_id, attribute):
+        node = self.infobroker.get('node.find_one', node_id = node_id)
+        sc_id = node['resolved_node_definition']['service_composer_id']
+        cfg = self.sc_cfgs[sc_id]
+        sc = ServiceComposer.instantiate(**cfg)
         return sc.cri_get_node_attribute(node_id, attribute).perform(sc)
 
