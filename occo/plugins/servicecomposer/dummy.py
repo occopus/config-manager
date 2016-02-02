@@ -33,7 +33,7 @@ class GetNodeAttribute(Command):
         self.node_id = node_id
         self.atribute = atribute
 
-    def perform(self, sc)
+    def perform(self, sc):
         return 'dummy-value'
 
 class RegisterNode(Command):

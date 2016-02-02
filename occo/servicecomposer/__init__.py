@@ -47,7 +47,7 @@ class ServiceComposerProvider(ib.InfoProvider):
     def service_status(self, instance_data):
         return self.service_composer.get_node_state(instance_data)
 
-class ServiceComposer(factory.Multibackend):
+class ServiceComposer(factory.MultiBackend):
     def __init__(self, sc_cfgs):
         self.sc_cfgs = sc_cfgs
         self.infobroker = ib.main_info_broker
