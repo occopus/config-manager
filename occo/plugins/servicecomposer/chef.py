@@ -86,7 +86,7 @@ class RegisterNode(Command):
 
     def ensure_role(self, sc):
         roles = sc.list_roles()
-        role = sc.role_name(resolved_node_definition)
+        role = sc.role_name(self.resolved_node_definition)
         if role in roles:
             log.debug('Role %r already exists', role)
         else:
@@ -102,7 +102,7 @@ class RegisterNode(Command):
         .. todo:: This must not be done here. Instead, this belongs to node
             resolution.
         """
-        run_list = resolved_node_definition['run_list']
+        run_list = self.resolved_node_definition['run_list']
         self.cond_prepend(run_list, sc.bootstrap_recipe_name())
         self.cond_prepend(
             run_list, 'role[{0}]'.format(sc.role_name(self.resolved_node_definition)))
@@ -151,7 +151,7 @@ class InfrastructureExists(Command):
         Command.__init__(self)
         self.infra_id = infra_id
     def perform(self, sc):
-        return infra_id in sc.list_environments()
+        return self.infra_id in sc.list_environments()
 
 class CreateInfrastructure(Command):
     def __init__(self, infra_id):

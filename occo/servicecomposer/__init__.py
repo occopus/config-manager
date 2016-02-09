@@ -39,9 +39,9 @@ class ServiceComposerProvider(ib.InfoProvider):
 
     .. todo:: Service Composer documentation.
     """
-    def __init__(self, sc, **config):
+    def __init__(self, service_composer, **config):
         self.__dict__.update(config)
-        self.service_composer = sc
+        self.service_composer = service_composer
 
     @ib.provides('node.service.state')
     def service_status(self, instance_data):
@@ -73,7 +73,10 @@ class ServiceComposer(factory.MultiBackend):
         raise NotImplementedError()
 
     def instantiate_sc(self, data):
-        cfg = self.sc_cfgs[data['service_composer_id']]
+        scid = data.get('service_composer_id')
+        if not scid:
+            scid = data['resolved_node_definition']['service_composer_id']
+        cfg = self.sc_cfgs[scid]
         return ServiceComposer.instantiate(**cfg)
 
     def register_node(self, resolved_node_definition):
@@ -89,49 +92,31 @@ class ServiceComposer(factory.MultiBackend):
         return sc.cri_get_node_state(instance_data).perform(sc)
 
     def create_infrastructure(self, infra_id):
-        instances = self.infobroker.get('infrastructure.node_instances',
-                                    infra_id, True)
-        sclist = []
-        for node in instances.itervalues():
-            for instance in node.itervalues():
-                sc_id = instance['resolved_node_definition']['service_composer_id']
-                if sc_id not in sclist:
-                    sclist.append(sc_id)
-        for sc_id in sclist:
-            cfg = self.sc_cfgs[sc_id]
+        log.debug("[SC]Building necessary environments for infrastructure %r", infra_id)
+        for key in self.sc_cfgs:
+            cfg = self.sc_cfgs[key]
             sc = ServiceComposer.instantiate(**cfg)
             sc.cri_create_infrastructure(infra_id).perform(sc)
 
     def drop_infrastructure(self, infra_id):
-        instances = self.infobroker.get('infrastructure.node_instances',
-                                    infra_id, True)
-        sclist = []
-        for node in instances.itervalues():
-            for instance in node.itervalues():
-                sc_id = instance['resolved_node_definition']['service_composer_id']
-                if sc_id not in sclist:
-                    sclist.append(sc_id)
-        for sc_id in sclist:
-            cfg = self.sc_cfgs[sc_id]
+        log.debug("[SC]Destroying environments for infrastructure %r", infra_id)
+        for key in self.sc_cfgs:
+            cfg = self.sc_cfgs[key]
             sc = ServiceComposer.instantiate(**cfg)
             sc.cri_drop_infrastructure(infra_id).perform(sc)
 
     def infrastructure_exists(self, infra_id):
-        instances = self.infobroker.get('infrastructure.node_instances',
-                                    infra_id, True)
-        sclist = []
+        log.debug("[SC]Checking necessary environments for infrastructure %r", infra_id)
         retval = True
-        for node in instances.itervalues():
-            for instance in node.itervalues():
-                sc_id = instance['resolved_node_definition']['service_composer_id']
-                if sc_id not in sclist:
-                    sclist.append(sc_id)
-        for sc_id in sclist:
-            cfg = self.sc_cfgs[sc_id]
+        for key in self.sc_cfgs:
+            cfg = self.sc_cfgs[key]
             sc = ServiceComposer.instantiate(**cfg)
             retval = sc.cri_infrastructure_exists(infra_id).perform(sc)
             if retval is False:
+                log.debug("[SC] Environment for %r is not ready", key)
                 break
+            else:
+                log.debug("[SC] Environment for %r is ready", key)
         return retval
 
     def get_node_attribute(self, node_id, attribute):
