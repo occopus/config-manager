@@ -125,4 +125,3 @@ class ServiceComposer(factory.MultiBackend):
         cfg = self.sc_cfgs[sc_id]
         sc = ServiceComposer.instantiate(**cfg)
         return sc.cri_get_node_attribute(node_id, attribute).perform(sc)
-
