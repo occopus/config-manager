@@ -51,6 +51,7 @@ class ServiceComposer(factory.MultiBackend):
     def __init__(self, sc_cfgs):
         self.sc_cfgs = sc_cfgs
         self.infobroker = ib.main_info_broker
+
     def cri_register_node(self, resolved_node_definition):
         raise NotImplementedError()
 
