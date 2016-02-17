@@ -14,7 +14,7 @@
 
 """ Chef Service Composer module for OCCO
 
-.. moduleauthor:: Adam Visegradi <adam.visegradi@sztaki.mta.hu>
+.. moduleauthor:: Adam Novak <novak.adam@sztaki.mta.hu>
 
 """
 
