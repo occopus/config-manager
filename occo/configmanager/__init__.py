@@ -35,7 +35,7 @@ class Command(object):
 
 @ib.provider
 class ConfigManagerProvider(ib.InfoProvider):
-    """Abstract interface of a service composer provider.
+    """Abstract interface of a config manager provider.
 
     .. todo:: Service Composer documentation.
     """

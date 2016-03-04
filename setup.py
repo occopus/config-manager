@@ -30,6 +30,7 @@ setuptools.setup(
         'occo.configmanager',
     ],
     py_modules=[
+        'occo.plugins.configmanager.dummy',
         'occo.plugins.configmanager.chef',
     ],
     scripts=[],

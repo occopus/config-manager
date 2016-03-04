@@ -2,7 +2,7 @@
 
 set -ex
 
-PDIR=env/sc-test
+PDIR=env/cm-test
 
 echo "Reseting '$PDIR'"
 
