@@ -12,7 +12,7 @@
 ### See the License for the specific language governing permissions and
 ### limitations under the License.
 
-""" Dummy Service Composer module for OCCO
+""" Dummy Configuration Manager module for OCCO
 
 .. moduleauthor:: Adam Novak <novak.adam@sztaki.mta.hu>
 
@@ -20,9 +20,9 @@
 
 from __future__ import absolute_import
 
-__all__ = [ 'DummyServiceComposer' ]
+__all__ = [ 'DummyConfigManager' ]
 
-from occo.servicecomposer import ServiceComposer, Command
+from occo.configmanager import ConfigManager, Command
 import occo.util as util
 import occo.util.factory as factory
 import logging
@@ -31,7 +31,7 @@ import occo.constants.status as status
 
 PROTOCOL_ID='dummy'
 
-log = logging.getLogger('occo.servicecomposer.dummy')
+log = logging.getLogger('occo.configmanager.dummy')
 
 class GetNodeState(Command):
     def __init__(self, instance_data):
@@ -90,8 +90,8 @@ class DropInfrastructure(Command):
     def perform(self, sc):
         return None
 
-@factory.register(ServiceComposer, 'dummy')
-class DummyServiceComposer(ServiceComposer):
+@factory.register(ConfigManager, 'dummy')
+class DummyConfigManager(ConfigManager):
     def __init__(self, name='dummy'):
         self.name = name
     

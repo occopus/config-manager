@@ -20,9 +20,9 @@
 
 from __future__ import absolute_import
 
-__all__  = [ 'ChefServiceComposer' ]
+__all__  = [ 'ChefConfigManager' ]
 
-from occo.servicecomposer import ServiceComposer, Command
+from occo.configmanager import ConfigManager, Command
 import occo.util as util
 import occo.util.factory as factory
 import logging
@@ -33,7 +33,7 @@ import occo.constants.status as status
 
 PROTOCOL_ID='chef'
 
-log = logging.getLogger('occo.servicecomposer')
+log = logging.getLogger('occo.configmanager')
 
 class GetNodeState(Command):
     def __init__(self, instance_data):
@@ -50,7 +50,7 @@ class GetNodeState(Command):
     @util.wet_method('ready')
     def perform(self, sc):
         node_id = self.instance_data['node_id']
-        log.debug("[SC] Querying node state for %r", node_id)
+        log.debug("[CM] Querying node state for %r", node_id)
         node = chef.Node(node_id, api=sc.chefapi)
         if self.chef_exists(sc, node):
             if 'ohai_time' in node.attributes:
@@ -113,7 +113,7 @@ class RegisterNode(Command):
             dest_attrs.set_dotted(k, v)
 
     def perform(self, sc):
-        log.info("[SC] Registering node: %r", self.resolved_node_definition['name'])
+        log.info("[CM] Registering node: %r", self.resolved_node_definition['name'])
 
         self.ensure_role(sc)
 
@@ -124,7 +124,7 @@ class RegisterNode(Command):
         self.assemble_attributes(n.normal)
         n.save()
 
-        log.debug("[SC] Done")
+        log.debug("[CM] Done")
 
 class DropNode(Command):
     def __init__(self, instance_data):
@@ -138,13 +138,13 @@ class DropNode(Command):
         .. todo:: Delete the generated client too.
         """
         node_id = sc.node_name(self.instance_data)
-        log.debug("[SC] Dropping node %r", node_id)
+        log.debug("[CM] Dropping node %r", node_id)
         try:
             chef.Node(node_id).delete()
-            log.debug("[SC] Done")
+            log.debug("[CM] Done")
         except Exception as ex:
             log.exception('Error dropping node:')
-            log.info('[SC] Dropping node failed - ignoring.')
+            log.info('[CM] Dropping node failed - ignoring.')
 
 class InfrastructureExists(Command):
     def __init__(self, infra_id):
@@ -158,9 +158,9 @@ class CreateInfrastructure(Command):
         Command.__init__(self)
         self.infra_id = infra_id
     def perform(self, sc):
-        log.debug("[SC] Creating environment %r", self.infra_id)
+        log.debug("[CM] Creating environment %r", self.infra_id)
         chef.Environment(self.infra_id, api=sc.chefapi).save()
-        log.debug("[SC] Done")
+        log.debug("[CM] Done")
 
 class DropInfrastructure(Command):
     def __init__(self, infra_id):
@@ -174,27 +174,27 @@ class DropInfrastructure(Command):
         filter = '{0}_'.format(infra_id)
         for role in sc.list_roles():
             if role.startswith(filter):
-                log.debug("[SC] Removing role: %r", role)
+                log.debug("[CM] Removing role: %r", role)
                 try:
                     chef.Role(role, api=sc.chefapi).delete()
                     log.debug("[SC] Done")
                 except Exception as ex:
                     log.exception('Error removing role:')
-                    log.info('[SC] Removing role failed - ignoring.')
+                    log.info('[CM] Removing role failed - ignoring.')
 
-        log.debug("[SC] Dropping environment %r", self.infra_id)
+        log.debug("[CM] Dropping environment %r", self.infra_id)
         try:
             chef.Environment(self.infra_id, api=sc.chefapi).delete()
-            log.debug("[SC] Done")
+            log.debug("[CM] Done")
         except Exception as ex:
             log.exception('Error dropping environment:')
-            log.info('[SC] drop_infrastructure failed - ignoring.')
+            log.info('[CM] drop_infrastructure failed - ignoring.')
 
 
-@factory.register(ServiceComposer, 'chef')
-class ChefServiceComposer(ServiceComposer):
+@factory.register(ConfigManager, 'chef')
+class ChefConfigManager(ConfigManager):
     """
-    Chef implementation of :class:`occo.servicecomposer.ServiceComposer`.
+    Chef implementation of :class:`occo.configmanager.ConfigManager`.
 
     .. todo:: Store instance name too so it can be used in logging.
     """
