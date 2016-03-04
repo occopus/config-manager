@@ -17,20 +17,20 @@ import setuptools
 from pip.req import parse_requirements
 
 setuptools.setup(
-    name='OCCO-ServiceComposer',
+    name='OCCO-ConfigManager',
     version='0.3.0',
     author='MTA SZTAKI',
     author_email='occopus@lpds.sztaki.hu',
     namespace_packages=[
         'occo',
         'occo.plugins',
-        'occo.plugins.servicecomposer',
+        'occo.plugins.configmanager',
     ],
     packages=[
-        'occo.servicecomposer',
+        'occo.configmanager',
     ],
     py_modules=[
-        'occo.plugins.servicecomposer.chef',
+        'occo.plugins.configmanager.chef',
     ],
     scripts=[],
     url='https://github.com/occopus',

@@ -12,42 +12,42 @@
 ### See the License for the specific language governing permissions and
 ### limitations under the License.
 
-""" Service Composer module for OCCO
+""" Configuration Manager module for OCCO
 
 .. moduleauthor:: Adam Novak <novak.adam@sztaki.mta.hu>
 
 """
 
-__all__  = [ 'ServiceComposer', 'ServiceComposerProvider' ]
+__all__  = [ 'ConfigManager', 'ConfigManagerProvider' ]
 
 import occo.util.factory as factory
 import occo.util as util
 import occo.infobroker as ib
 import logging
 
-log = logging.getLogger('occo.servicecomposer')
+log = logging.getLogger('occo.configmanager')
 
 class Command(object):
     def __init__(self):
         pass
-    def perform(self, service_composer):
+    def perform(self, config_manager):
         raise NotImplementedError()
 
 @ib.provider
-class ServiceComposerProvider(ib.InfoProvider):
+class ConfigManagerProvider(ib.InfoProvider):
     """Abstract interface of a service composer provider.
 
     .. todo:: Service Composer documentation.
     """
-    def __init__(self, service_composer, **config):
+    def __init__(self, config_manager, **config):
         self.__dict__.update(config)
-        self.service_composer = service_composer
+        self.config_manager = config_manager
 
     @ib.provides('node.service.state')
     def service_status(self, instance_data):
-        return self.service_composer.get_node_state(instance_data)
+        return self.config_manager.get_node_state(instance_data)
 
-class ServiceComposer(factory.MultiBackend):
+class ConfigManager(factory.MultiBackend):
     def __init__(self, sc_cfgs):
         self.sc_cfgs = sc_cfgs
         self.infobroker = ib.main_info_broker
@@ -74,11 +74,11 @@ class ServiceComposer(factory.MultiBackend):
         raise NotImplementedError()
 
     def instantiate_sc(self, data):
-        scid = data.get('service_composer_id')
+        scid = data.get('config_manager_id')
         if not scid:
-            scid = data['resolved_node_definition']['service_composer_id']
+            scid = data['resolved_node_definition']['config_manager_id']
         cfg = self.sc_cfgs[scid]
-        return ServiceComposer.instantiate(**cfg)
+        return ConfigManager.instantiate(**cfg)
 
     def register_node(self, resolved_node_definition):
         sc = self.instantiate_sc(resolved_node_definition)
@@ -96,14 +96,14 @@ class ServiceComposer(factory.MultiBackend):
         log.debug("[SC]Building necessary environments for infrastructure %r", infra_id)
         for key in self.sc_cfgs:
             cfg = self.sc_cfgs[key]
-            sc = ServiceComposer.instantiate(**cfg)
+            sc = ConfigManager.instantiate(**cfg)
             sc.cri_create_infrastructure(infra_id).perform(sc)
 
     def drop_infrastructure(self, infra_id):
         log.debug("[SC]Destroying environments for infrastructure %r", infra_id)
         for key in self.sc_cfgs:
             cfg = self.sc_cfgs[key]
-            sc = ServiceComposer.instantiate(**cfg)
+            sc = ConfigManager.instantiate(**cfg)
             sc.cri_drop_infrastructure(infra_id).perform(sc)
 
     def infrastructure_exists(self, infra_id):
@@ -111,7 +111,7 @@ class ServiceComposer(factory.MultiBackend):
         retval = True
         for key in self.sc_cfgs:
             cfg = self.sc_cfgs[key]
-            sc = ServiceComposer.instantiate(**cfg)
+            sc = ConfigManager.instantiate(**cfg)
             retval = sc.cri_infrastructure_exists(infra_id).perform(sc)
             if retval is False:
                 log.debug("[SC] Environment for %r is not ready", key)
@@ -122,7 +122,7 @@ class ServiceComposer(factory.MultiBackend):
 
     def get_node_attribute(self, node_id, attribute):
         node = self.infobroker.get('node.find_one', node_id = node_id)
-        sc_id = node['resolved_node_definition']['service_composer_id']
+        sc_id = node['resolved_node_definition']['config_manager_id']
         cfg = self.sc_cfgs[sc_id]
-        sc = ServiceComposer.instantiate(**cfg)
+        sc = ConfigManager.instantiate(**cfg)
         return sc.cri_get_node_attribute(node_id, attribute).perform(sc)
