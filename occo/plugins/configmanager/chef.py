@@ -40,19 +40,19 @@ class GetNodeState(Command):
         Command.__init__(self)
         self.instance_data = instance_data
     
-    def chef_exists(self, sc, chef_object):
+    def chef_exists(self, cm, chef_object):
         try:
-            sc.chefapi.api_request('GET', chef_object.url, data=chef_object)
+            cm.chefapi.api_request('GET', chef_object.url, data=chef_object)
             return True
         except ChefServerNotFoundError:
             return False
     
     @util.wet_method('ready')
-    def perform(self, sc):
+    def perform(self, cm):
         node_id = self.instance_data['node_id']
         log.debug("[CM] Querying node state for %r", node_id)
-        node = chef.Node(node_id, api=sc.chefapi)
-        if self.chef_exists(sc, node):
+        node = chef.Node(node_id, api=cm.chefapi)
+        if self.chef_exists(cm, node):
             if 'ohai_time' in node.attributes:
                 return status.READY
             else:
@@ -67,8 +67,8 @@ class GetNodeAttribute(Command):
         self.attribute = attribute
 
     @util.wet_method('dummy-value')
-    def perform(self, sc):
-        node = chef.Node(self.node_id, api=sc.chefapi)
+    def perform(self, cm):
+        node = chef.Node(self.node_id, api=cm.chefapi)
         dotted_attr = \
             attribute if isinstance(self.attribute, basestring) \
             else '.'.join(self.attribute) if hasattr(self.attribute, '__iter__') \
@@ -84,43 +84,43 @@ class RegisterNode(Command):
         Command.__init__(self)
         self.resolved_node_definition = resolved_node_definition
 
-    def ensure_role(self, sc):
-        roles = sc.list_roles()
-        role = sc.role_name(self.resolved_node_definition)
+    def ensure_role(self, cm):
+        roles = cm.list_roles()
+        role = cm.role_name(self.resolved_node_definition)
         if role in roles:
             log.debug('Role %r already exists', role)
         else:
             log.info('Registering role %r', role)
-            chef.Role(role, api=sc.chefapi).save()
+            chef.Role(role, api=cm.chefapi).save()
 
     def cond_prepend(self, lst, item):
         if not item in lst:
             lst.insert(0, item)
 
-    def assemble_run_list(self, sc):
+    def assemble_run_list(self, cm):
         """
         .. todo:: This must not be done here. Instead, this belongs to node
             resolution.
         """
-        run_list = self.resolved_node_definition['run_list']
-        self.cond_prepend(run_list, sc.bootstrap_recipe_name())
+        run_list = self.resolved_node_definition['config_management']['run_list']
+        self.cond_prepend(run_list, cm.bootstrap_recipe_name())
         self.cond_prepend(
-            run_list, 'role[{0}]'.format(sc.role_name(self.resolved_node_definition)))
+            run_list, 'role[{0}]'.format(cm.role_name(self.resolved_node_definition)))
         return run_list
 
     def assemble_attributes(self, dest_attrs):
         for k, v in self.resolved_node_definition['attributes'].iteritems():
             dest_attrs.set_dotted(k, v)
 
-    def perform(self, sc):
+    def perform(self, cm):
         log.info("[CM] Registering node: %r", self.resolved_node_definition['name'])
 
-        self.ensure_role(sc)
+        self.ensure_role(cm)
 
-        n = chef.Node(sc.node_name(self.resolved_node_definition),
-                      api=sc.chefapi)
+        n = chef.Node(cm.node_name(self.resolved_node_definition),
+                      api=cm.chefapi)
         n.chef_environment = self.resolved_node_definition['infra_id']
-        n.run_list = self.assemble_run_list(sc)
+        n.run_list = self.assemble_run_list(cm)
         self.assemble_attributes(n.normal)
         n.save()
 
@@ -131,13 +131,13 @@ class DropNode(Command):
         Command.__init__(self)
         self.instance_data = instance_data
     
-    def perform(self, sc):
+    def perform(self, cm):
         """
         Delete a node and all associated data from the chef server.
 
         .. todo:: Delete the generated client too.
         """
-        node_id = sc.node_name(self.instance_data)
+        node_id = cm.node_name(self.instance_data)
         log.debug("[CM] Dropping node %r", node_id)
         try:
             chef.Node(node_id).delete()
@@ -150,41 +150,41 @@ class InfrastructureExists(Command):
     def __init__(self, infra_id):
         Command.__init__(self)
         self.infra_id = infra_id
-    def perform(self, sc):
-        return self.infra_id in sc.list_environments()
+    def perform(self, cm):
+        return self.infra_id in cm.list_environments()
 
 class CreateInfrastructure(Command):
     def __init__(self, infra_id):
         Command.__init__(self)
         self.infra_id = infra_id
-    def perform(self, sc):
+    def perform(self, cm):
         log.debug("[CM] Creating environment %r", self.infra_id)
-        chef.Environment(self.infra_id, api=sc.chefapi).save()
+        chef.Environment(self.infra_id, api=cm.chefapi).save()
         log.debug("[CM] Done")
 
 class DropInfrastructure(Command):
     def __init__(self, infra_id):
         Command.__init__(self)
         self.infra_id = infra_id
-    def perform(self, sc):
+    def perform(self, cm):
         """
         Delete the environment and associated data.
 
         """
         filter = '{0}_'.format(infra_id)
-        for role in sc.list_roles():
+        for role in cm.list_roles():
             if role.startswith(filter):
                 log.debug("[CM] Removing role: %r", role)
                 try:
-                    chef.Role(role, api=sc.chefapi).delete()
-                    log.debug("[SC] Done")
+                    chef.Role(role, api=cm.chefapi).delete()
+                    log.debug("[CM] Done")
                 except Exception as ex:
                     log.exception('Error removing role:')
                     log.info('[CM] Removing role failed - ignoring.')
 
         log.debug("[CM] Dropping environment %r", self.infra_id)
         try:
-            chef.Environment(self.infra_id, api=sc.chefapi).delete()
+            chef.Environment(self.infra_id, api=cm.chefapi).delete()
             log.debug("[CM] Done")
         except Exception as ex:
             log.exception('Error dropping environment:')
@@ -200,7 +200,11 @@ class ChefConfigManager(ConfigManager):
     """
     def __init__(self, dry_run=False, **backend_config):
         self.dry_run = dry_run
-        self.chefapi = chef.ChefAPI(**backend_config)
+        config = dict()
+        config['client'] = backend_config['client_name']
+        config['key'] = backend_config['client_key']
+        config['url'] = backend_config['endpoint']
+        self.chefapi = chef.ChefAPI(**config)
 
     def role_name(self, resolved_node_definition):
         return '{infra_id}_{name}'.format(**resolved_node_definition)

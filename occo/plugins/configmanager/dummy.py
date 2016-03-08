@@ -92,7 +92,7 @@ class DropInfrastructure(Command):
 
 @factory.register(ConfigManager, 'dummy')
 class DummyConfigManager(ConfigManager):
-    def __init__(self, name='dummy'):
+    def __init__(self, name='dummy', **kwargs):
         self.name = name
     
     def cri_drop_infrastructure(self, infra_id):

@@ -48,9 +48,10 @@ class ConfigManagerProvider(ib.InfoProvider):
         return self.config_manager.get_node_state(instance_data)
 
 class ConfigManager(factory.MultiBackend):
-    def __init__(self, sc_cfgs):
-        self.sc_cfgs = sc_cfgs
+    def __init__(self):
         self.infobroker = ib.main_info_broker
+        self.config_managers = None
+        return
 
     def cri_register_node(self, resolved_node_definition):
         raise NotImplementedError()
@@ -73,56 +74,53 @@ class ConfigManager(factory.MultiBackend):
     def cri_infra_exists(self, infra_id):
         raise NotImplementedError()
 
-    def instantiate_sc(self, data):
-        scid = data.get('config_manager_id')
-        if not scid:
-            scid = data['resolved_node_definition']['config_manager_id']
-        cfg = self.sc_cfgs[scid]
-        return ConfigManager.instantiate(**cfg)
+    def instantiate_cm(self, data):
+        cfg = data.get('config_management')
+        if not cfg:
+            cfg = data['resolved_node_definition']['config_management']
+        return ConfigManager.instantiate(protocol=cfg['type'],**cfg)
 
     def register_node(self, resolved_node_definition):
-        sc = self.instantiate_sc(resolved_node_definition)
-        return sc.cri_register_node(resolved_node_definition).perform(sc)
+        cm = self.instantiate_cm(resolved_node_definition)
+        return cm.cri_register_node(resolved_node_definition).perform(cm)
 
     def drop_node(self, instance_data):
-        sc = self.instantiate_sc(instance_data)
-        return sc.cri_drop_node(instance_data).perform(sc)
+        cm = self.instantiate_cm(instance_data)
+        return cm.cri_drop_node(instance_data).perform(cm)
 
     def get_node_state(self, instance_data):
-        sc = self.instantiate_sc(instance_data)
-        return sc.cri_get_node_state(instance_data).perform(sc)
+        cm = self.instantiate_cm(instance_data)
+        return cm.cri_get_node_state(instance_data).perform(cm)
 
     def create_infrastructure(self, infra_id):
         log.debug("[SC]Building necessary environments for infrastructure %r", infra_id)
-        for key in self.sc_cfgs:
-            cfg = self.sc_cfgs[key]
-            sc = ConfigManager.instantiate(**cfg)
-            sc.cri_create_infrastructure(infra_id).perform(sc)
+        self.config_managers = self.infobroker.get('config_managers',infra_id) if self.config_managers is None else self.config_managers
+	for cfg in self.config_managers:
+            cm = ConfigManager.instantiate(protocol=cfg['type'],**cfg)
+            cm.cri_create_infrastructure(infra_id).perform(cm)
 
     def drop_infrastructure(self, infra_id):
         log.debug("[SC]Destroying environments for infrastructure %r", infra_id)
-        for key in self.sc_cfgs:
-            cfg = self.sc_cfgs[key]
-            sc = ConfigManager.instantiate(**cfg)
-            sc.cri_drop_infrastructure(infra_id).perform(sc)
+        self.config_managers = self.infobroker.get('config_managers', infra_id) if self.config_managers is None else self.config_managers
+        for cfg in self.config_managers:
+            cm = ConfigManager.instantiate(protocol=cfg['type'],**cfg)
+            cm.cri_drop_infrastructure(infra_id).perform(cm)
 
     def infrastructure_exists(self, infra_id):
         log.debug("[SC]Checking necessary environments for infrastructure %r", infra_id)
-        retval = True
-        for key in self.sc_cfgs:
-            cfg = self.sc_cfgs[key]
-            sc = ConfigManager.instantiate(**cfg)
-            retval = sc.cri_infrastructure_exists(infra_id).perform(sc)
+        self.config_managers = self.infobroker.get('config_managers', infra_id) if self.config_managers is None else self.config_managers
+        for cfg in self.config_managers:
+            cm = ConfigManager.instantiate(protocol=cfg['type'],**cfg)
+            retval = cm.cri_infrastructure_exists(infra_id).perform(cm)
             if retval is False:
-                log.debug("[SC] Environment for %r is not ready", key)
+                log.debug("[CM] Environment for %r (%r) is not ready", cfg['type'], cfg['endpoint'])
                 break
             else:
-                log.debug("[SC] Environment for %r is ready", key)
+                log.debug("[CM] Environment for %r (%r) is ready", cfg['type'], cfg['endpoint'])
         return retval
 
     def get_node_attribute(self, node_id, attribute):
         node = self.infobroker.get('node.find_one', node_id = node_id)
-        sc_id = node['resolved_node_definition']['config_manager_id']
-        cfg = self.sc_cfgs[sc_id]
-        sc = ConfigManager.instantiate(**cfg)
-        return sc.cri_get_node_attribute(node_id, attribute).perform(sc)
+        cfg = node['resolved_node_definition']
+        cm = self.instantiate_cm(cfg)
+        return cm.cri_get_node_attribute(node_id, attribute).perform(cm)
