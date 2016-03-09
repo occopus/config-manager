@@ -112,6 +112,7 @@ class RegisterNode(Command):
         for k, v in self.resolved_node_definition['attributes'].iteritems():
             dest_attrs.set_dotted(k, v)
 
+    @util.wet_method()
     def perform(self, cm):
         log.info("[CM] Registering node: %r", self.resolved_node_definition['name'])
 
@@ -131,6 +132,7 @@ class DropNode(Command):
         Command.__init__(self)
         self.instance_data = instance_data
     
+    @util.wet_method()
     def perform(self, cm):
         """
         Delete a node and all associated data from the chef server.
@@ -140,7 +142,7 @@ class DropNode(Command):
         node_id = cm.node_name(self.instance_data)
         log.debug("[CM] Dropping node %r", node_id)
         try:
-            chef.Node(node_id).delete()
+            chef.Node(node_id, api=cm.chefapi).delete()
             log.debug("[CM] Done")
         except Exception as ex:
             log.exception('Error dropping node:')
@@ -150,6 +152,8 @@ class InfrastructureExists(Command):
     def __init__(self, infra_id):
         Command.__init__(self)
         self.infra_id = infra_id
+    
+    @util.wet_method(True)
     def perform(self, cm):
         return self.infra_id in cm.list_environments()
 
@@ -157,6 +161,8 @@ class CreateInfrastructure(Command):
     def __init__(self, infra_id):
         Command.__init__(self)
         self.infra_id = infra_id
+    
+    @util.wet_method()
     def perform(self, cm):
         log.debug("[CM] Creating environment %r", self.infra_id)
         chef.Environment(self.infra_id, api=cm.chefapi).save()
@@ -166,12 +172,14 @@ class DropInfrastructure(Command):
     def __init__(self, infra_id):
         Command.__init__(self)
         self.infra_id = infra_id
+    
+    @util.wet_method()
     def perform(self, cm):
         """
         Delete the environment and associated data.
 
         """
-        filter = '{0}_'.format(infra_id)
+        filter = '{0}_'.format(self.infra_id)
         for role in cm.list_roles():
             if role.startswith(filter):
                 log.debug("[CM] Removing role: %r", role)
@@ -208,8 +216,10 @@ class ChefConfigManager(ConfigManager):
 
     def role_name(self, resolved_node_definition):
         return '{infra_id}_{name}'.format(**resolved_node_definition)
+
     def node_name(self, resolved_node_definition):
         return '{node_id}'.format(**resolved_node_definition)
+
     def bootstrap_recipe_name(self):
         return 'recipe[connect]'
 

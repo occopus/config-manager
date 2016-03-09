@@ -93,21 +93,21 @@ class ConfigManager(factory.MultiBackend):
         return cm.cri_get_node_state(instance_data).perform(cm)
 
     def create_infrastructure(self, infra_id):
-        log.debug("[SC]Building necessary environments for infrastructure %r", infra_id)
+        log.debug("[CM] Building necessary environments for infrastructure %r", infra_id)
         self.config_managers = self.infobroker.get('config_managers',infra_id) if self.config_managers is None else self.config_managers
 	for cfg in self.config_managers:
             cm = ConfigManager.instantiate(protocol=cfg['type'],**cfg)
             cm.cri_create_infrastructure(infra_id).perform(cm)
 
     def drop_infrastructure(self, infra_id):
-        log.debug("[SC]Destroying environments for infrastructure %r", infra_id)
+        log.debug("[CM] Destroying environments for infrastructure %r", infra_id)
         self.config_managers = self.infobroker.get('config_managers', infra_id) if self.config_managers is None else self.config_managers
         for cfg in self.config_managers:
             cm = ConfigManager.instantiate(protocol=cfg['type'],**cfg)
             cm.cri_drop_infrastructure(infra_id).perform(cm)
 
     def infrastructure_exists(self, infra_id):
-        log.debug("[SC]Checking necessary environments for infrastructure %r", infra_id)
+        log.debug("[CM] Checking necessary environments for infrastructure %r", infra_id)
         self.config_managers = self.infobroker.get('config_managers', infra_id) if self.config_managers is None else self.config_managers
         for cfg in self.config_managers:
             cm = ConfigManager.instantiate(protocol=cfg['type'],**cfg)
