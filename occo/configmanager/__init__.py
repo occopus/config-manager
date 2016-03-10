@@ -77,7 +77,9 @@ class ConfigManager(factory.MultiBackend):
     def instantiate_cm(self, data):
         cfg = data.get('config_management')
         if not cfg:
-            cfg = data['resolved_node_definition']['config_management']
+            cfg = data.get('resolved_node_definition',dict()).get('config_management',None)
+        if not cfg:
+            cfg = dict(type='dummy',name='dummy')
         return ConfigManager.instantiate(protocol=cfg['type'],**cfg)
 
     def register_node(self, resolved_node_definition):
