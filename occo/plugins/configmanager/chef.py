@@ -206,12 +206,11 @@ class ChefConfigManager(ConfigManager):
 
     .. todo:: Store instance name too so it can be used in logging.
     """
-    def __init__(self, dry_run=False, **backend_config):
-        self.dry_run = dry_run
+    def __init__(self, endpoint, auth_data, **cfg):
         config = dict()
-        config['client'] = backend_config['client_name']
-        config['key'] = backend_config['client_key']
-        config['url'] = backend_config['endpoint']
+        config['client'] = auth_data['client_name']
+        config['key'] = auth_data['client_key']
+        config['url'] = endpoint
         self.chefapi = chef.ChefAPI(**config)
 
     def role_name(self, resolved_node_definition):

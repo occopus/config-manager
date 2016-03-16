@@ -74,45 +74,56 @@ class ConfigManager(factory.MultiBackend):
     def cri_infra_exists(self, infra_id):
         raise NotImplementedError()
 
-    def instantiate_cm(self, data):
+    def instantiate_cm_with_node_def(self, data):
         cfg = data.get('config_management')
         if not cfg:
             cfg = data.get('resolved_node_definition',dict()).get('config_management',None)
         if not cfg:
             cfg = dict(type='dummy',name='dummy')
-        return ConfigManager.instantiate(protocol=cfg['type'],**cfg)
+        auth_data = ib.real_main_info_broker.get('backends.auth_data',"config_management",cfg) if cfg.get('type') is not "dummy" else None
+        return ConfigManager.instantiate(\
+               protocol=cfg['type'],\
+               auth_data=auth_data,\
+               **cfg)
+
+    def instantiate_cm_with_config_section(self, cfg):
+        auth_data = self.infobroker.get('backends.auth_data',"config_management",cfg) if cfg.get('type') is not "dummy" else None
+        return ConfigManager.instantiate(\
+               protocol=cfg['type'],\
+               auth_data=auth_data,\
+               **cfg)
 
     def register_node(self, resolved_node_definition):
-        cm = self.instantiate_cm(resolved_node_definition)
+        cm = self.instantiate_cm_with_node_def(resolved_node_definition)
         return cm.cri_register_node(resolved_node_definition).perform(cm)
 
     def drop_node(self, instance_data):
-        cm = self.instantiate_cm(instance_data)
+        cm = self.instantiate_cm_with_node_def(instance_data)
         return cm.cri_drop_node(instance_data).perform(cm)
 
     def get_node_state(self, instance_data):
-        cm = self.instantiate_cm(instance_data)
+        cm = self.instantiate_cm_with_node_def(instance_data)
         return cm.cri_get_node_state(instance_data).perform(cm)
 
     def create_infrastructure(self, infra_id):
         log.debug("[CM] Building necessary environments for infrastructure %r", infra_id)
         self.config_managers = self.infobroker.get('config_managers',infra_id) if self.config_managers is None else self.config_managers
 	for cfg in self.config_managers:
-            cm = ConfigManager.instantiate(protocol=cfg['type'],**cfg)
+            cm = self.instantiate_cm_with_config_section(cfg)
             cm.cri_create_infrastructure(infra_id).perform(cm)
 
     def drop_infrastructure(self, infra_id):
         log.debug("[CM] Destroying environments for infrastructure %r", infra_id)
         self.config_managers = self.infobroker.get('config_managers', infra_id) if self.config_managers is None else self.config_managers
         for cfg in self.config_managers:
-            cm = ConfigManager.instantiate(protocol=cfg['type'],**cfg)
+            cm = self.instantiate_cm_with_config_section(cfg)
             cm.cri_drop_infrastructure(infra_id).perform(cm)
 
     def infrastructure_exists(self, infra_id):
         log.debug("[CM] Checking necessary environments for infrastructure %r", infra_id)
         self.config_managers = self.infobroker.get('config_managers', infra_id) if self.config_managers is None else self.config_managers
         for cfg in self.config_managers:
-            cm = ConfigManager.instantiate(protocol=cfg['type'],**cfg)
+            cm = self.instantiate_cm_with_config_section(cfg)
             retval = cm.cri_infrastructure_exists(infra_id).perform(cm)
             if retval is False:
                 log.debug("[CM] Environment for %r (%r) is not ready", cfg['type'], cfg['endpoint'])
@@ -124,5 +135,5 @@ class ConfigManager(factory.MultiBackend):
     def get_node_attribute(self, node_id, attribute):
         node = self.infobroker.get('node.find_one', node_id = node_id)
         cfg = node['resolved_node_definition']
-        cm = self.instantiate_cm(cfg)
+        cm = self.instantiate_cm_with_node_def(cfg)
         return cm.cri_get_node_attribute(node_id, attribute).perform(cm)
