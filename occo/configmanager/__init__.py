@@ -33,6 +33,29 @@ class Command(object):
     def perform(self, config_manager):
         raise NotImplementedError()
 
+class CMSchemaChecker(factory.MultiBackend):
+    def __init__(self):
+        return
+
+    def perform_check(self, data):
+        raise NotImplementedError()
+
+    def check_required_keys(self, data, req_keys):
+        missing_keys = list()
+        for rkey in req_keys:
+            if rkey not in data:
+                print "ERROR: missing key \"%s\" in resource_handler configuration" % rkey
+                missing_keys.append(rkey)
+        return missing_keys
+
+    def check_invalid_keys(self, data, valid_keys):
+        invalid_keys = list()
+        for key in data:
+            if key not in valid_keys:
+                print "ERROR: invalid key \"%s\" in resource_handler configuration" % key
+                invalid_keys.append(key)
+        return invalid_keys
+
 @ib.provider
 class ConfigManagerProvider(ib.InfoProvider):
     """Abstract interface of a config manager provider.

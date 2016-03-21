@@ -22,7 +22,7 @@ from __future__ import absolute_import
 
 __all__  = [ 'ChefConfigManager' ]
 
-from occo.configmanager import ConfigManager, Command
+from occo.configmanager import ConfigManager, Command, CMSchemaChecker
 import occo.util as util
 import occo.util.factory as factory
 import logging
@@ -254,3 +254,14 @@ class ChefConfigManager(ConfigManager):
 
     def perform(self, instruction):
         instruction.perform(self)
+
+@factory.register(CFSchemaChecker, PROTOCOL_ID)
+class ChefSchemaChecker(CFSchemaChecker):
+    def __init__(self):
+#        super(__init__(), self)
+        self.req_keys = ["type", "endpoint"]
+        self.opt_keys = ["run_list", "attributes"]
+    def perform_check(self, data):
+        missing_keys = CFSchemaChecker.check_required_keys(self, data, self.req_keys)
+        valid_keys = self.req_keys + self.opt_keys
+        invalid_keys = CFSchemaChecker.check_invalid_keys(self, data, valid_keys)
