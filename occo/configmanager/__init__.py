@@ -24,6 +24,7 @@ import occo.util.factory as factory
 import occo.util as util
 import occo.infobroker as ib
 import logging
+from occo.exceptions import SchemaError
 
 log = logging.getLogger('occo.configmanager')
 
@@ -32,6 +33,27 @@ class Command(object):
         pass
     def perform(self, config_manager):
         raise NotImplementedError()
+
+class CMSchemaChecker(factory.MultiBackend):
+    def __init__(self):
+        return
+
+    def perform_check(self, data):
+        raise NotImplementedError()
+
+    def get_missing_keys(self, data, req_keys):
+        missing_keys = list()
+        for rkey in req_keys:
+            if rkey not in data:
+                missing_keys.append(rkey)
+        return missing_keys
+
+    def get_invalid_keys(self, data, valid_keys):
+        invalid_keys = list()
+        for key in data:
+            if key not in valid_keys:
+                invalid_keys.append(key)
+        return invalid_keys
 
 @ib.provider
 class ConfigManagerProvider(ib.InfoProvider):

@@ -22,13 +22,13 @@ from __future__ import absolute_import
 
 __all__  = [ 'ChefConfigManager' ]
 
-from occo.configmanager import ConfigManager, Command
+from occo.configmanager import ConfigManager, Command, CMSchemaChecker
 import occo.util as util
 import occo.util.factory as factory
 import logging
 import chef
 from chef.exceptions import ChefServerNotFoundError
-
+from occo.exceptions import SChemaError
 import occo.constants.status as status
 
 PROTOCOL_ID='chef'
@@ -253,3 +253,21 @@ class ChefConfigManager(ConfigManager):
 
     def perform(self, instruction):
         instruction.perform(self)
+
+@factory.register(CFSchemaChecker, PROTOCOL_ID)
+class ChefSchemaChecker(CFSchemaChecker):
+    def __init__(self):
+#        super(__init__(), self)
+        self.req_keys = ["type", "endpoint"]
+        self.opt_keys = ["run_list", "attributes"]
+    def perform_check(self, data):
+        missing_keys = CFSchemaChecker.get_missing_keys(self, data, self.req_keys)
+        if missing_keys:
+            msg = "missing required keys: " + ', '.join(str(key) for key in missing_keys)
+            raise SchemaError(msg)
+        valid_keys = self.req_keys + self.opt_keys
+        invalid_keys = CFSchemaChecker.get_invalid_keys(self, data, valid_keys)
+        if invalid_keys:
+            msg = "invalid keys found: " + ', '.join(str(key) for key in invalid_keys)
+            raise SchemaError(msg)
+        return True
