@@ -28,7 +28,7 @@ import occo.util.factory as factory
 import logging
 import chef
 from chef.exceptions import ChefServerNotFoundError
-
+from occo.exceptions import SChemaError
 import occo.constants.status as status
 
 PROTOCOL_ID='chef'
@@ -262,6 +262,13 @@ class ChefSchemaChecker(CFSchemaChecker):
         self.req_keys = ["type", "endpoint"]
         self.opt_keys = ["run_list", "attributes"]
     def perform_check(self, data):
-        missing_keys = CFSchemaChecker.check_required_keys(self, data, self.req_keys)
+        missing_keys = CFSchemaChecker.get_missing_keys(self, data, self.req_keys)
+        if missing_keys:
+            msg = "missing required keys: " + ', '.join(str(key) for key in missing_keys)
+            raise SchemaError(msg)
         valid_keys = self.req_keys + self.opt_keys
-        invalid_keys = CFSchemaChecker.check_invalid_keys(self, data, valid_keys)
+        invalid_keys = CFSchemaChecker.get_invalid_keys(self, data, valid_keys)
+        if invalid_keys:
+            msg = "invalid keys found: " + ', '.join(str(key) for key in invalid_keys)
+            raise SchemaError(msg)
+        return True
