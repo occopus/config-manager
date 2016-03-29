@@ -18,7 +18,7 @@
 
 """
 
-__all__  = [ 'ConfigManager', 'ConfigManagerProvider' ]
+__all__  = [ 'ConfigManager', 'ConfigManagerProvider', 'CMSchemaChecker' ]
 
 import occo.util.factory as factory
 import occo.util as util
