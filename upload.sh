@@ -10,4 +10,4 @@ if [ ! -d wheelhouse ]; then
     fi
 fi
 
-scp wheelhouse/OCCO?ServiceComposer*.whl root@c155-10.localcloud:/opt/pypi-server/packages
+scp wheelhouse/OCCO?ConfigManager*.whl root@c155-10.localcloud:/opt/pypi-server/packages

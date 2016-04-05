@@ -18,7 +18,7 @@ from pip.req import parse_requirements
 
 setuptools.setup(
     name='OCCO-ConfigManager',
-    version='0.3.0',
+    version='1.0',
     author='MTA SZTAKI',
     author_email='occopus@lpds.sztaki.hu',
     namespace_packages=[
@@ -36,7 +36,7 @@ setuptools.setup(
     scripts=[],
     url='https://github.com/occopus',
     license='LICENSE.txt',
-    description='Occopus Service Composer',
+    description='Occopus Config Manager',
     long_description=open('README.txt').read(),
     install_requires=[
         'pychef',
