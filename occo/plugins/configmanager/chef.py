@@ -206,6 +206,7 @@ class ChefConfigManager(ConfigManager):
 
     .. todo:: Store instance name too so it can be used in logging.
     """
+    @util.wet_method()
     def __init__(self, endpoint, auth_data, **cfg):
         config = dict()
         config['client'] = auth_data['client_name']
@@ -222,10 +223,12 @@ class ChefConfigManager(ConfigManager):
     def bootstrap_recipe_name(self):
         return 'recipe[connect]'
 
+    @util.wet_method(list())
     def list_environments(self):
         log.debug('Listing environments')
         return list(chef.Environment.list(api=self.chefapi))
 
+    @util.wet_method(list())
     def list_roles(self):
         log.debug('Listing roles')
         return list(chef.Role.list(api=self.chefapi))
