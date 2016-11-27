@@ -34,99 +34,21 @@ PROTOCOL_ID='puppet'
 
 log = logging.getLogger('occo.configmanager')
 
-class GetNodeState(Command):
-    def __init__(self, instance_data):
+class DummyCommand(Command):
+    def __init__(self, retval=None):
         Command.__init__(self)
-        self.instance_data = instance_data
-    
-    @util.wet_method('ready')
-    def perform(self, cm):
-        node_id = self.instance_data['node_id']
-        log.debug("[CM] Get node state for %r", node_id)
-        log.debug("[CM] Endpoint: %s",str(cm.endpoint))
-        log.debug("[CM] Config manager auth_data: %s",str(cm.auth_data))
-        log.debug("[CM] Instance_data: %s", str(self.instance_data))
-        return status.READY
-        #return status.PENDING
-        #return status.SHUTDOWN
-        #return status.UNKNOWN
-        #return status.TMP_FAIL
-        #return status.FAIL
-        
-class GetNodeAttribute(Command):
-    def __init__(self, node_id, attribute):
-        Command.__init__(self)
-        self.node_id = node_id
+        self.retval = retval
 
-    @util.wet_method('dummy-value')
     def perform(self, cm):
-        log.debug("[CM] Get node attribute: %r", self.resolved_node_definition['name'])
-        log.debug("[CM] Endpoint: %s",str(cm.endpoint))
-        log.debug("[CM] Config manager auth_data: %s",str(cm.auth_data))
-        return 'dummy-value'
+        return self.retval
 
-class RegisterNode(Command):
-    def __init__(self, resolved_node_definition):
-        Command.__init__(self)
-        self.resolved_node_definition = resolved_node_definition
+class ResolveAttributes(Command):
+    def __init__(self):
+	Command.__init__(self)
+	##TODO: fill constructor of new command class
 
-    @util.wet_method()
     def perform(self, cm):
-        log.debug("[CM] Registering node: %r", self.resolved_node_definition['name'])
-        log.debug("[CM] Endpoint: %s",str(cm.endpoint))
-        log.debug("[CM] Config manager auth_data: %s",str(cm.auth_data))
-        cfgmgmtsec = self.resolved_node_definition.get('config_management',None)
-        log.debug("[CM] Config management section keys and values: %s",str(cfgmgmtsec))
-
-class DropNode(Command):
-    def __init__(self, instance_data):
-        Command.__init__(self)
-        self.instance_data = instance_data
- 
-    @util.wet_method()
-    def perform(self, cm):
-        node_id = self.instance_data['node_id']
-        log.debug("[CM] Dropping node: %r", node_id)
-        log.debug("[CM] Endpoint: %s",str(cm.endpoint))
-        log.debug("[CM] Config manager auth_data: %s",str(cm.auth_data))
-        log.debug("[CM] Instance_data: %s", str(self.instance_data))
-
-class InfrastructureExists(Command):
-    def __init__(self, infra_id):
-        Command.__init__(self)
-        self.infra_id = infra_id
-    
-    @util.wet_method(True)
-    def perform(self, cm):
-        log.debug("[CM] Infrastructure exists: %r", self.infra_id)
-        log.debug("[CM] Infraid: %s",str(self.infra_id))
-        log.debug("[CM] Endpoint: %s",str(cm.endpoint))
-        log.debug("[CM] Config manager auth_data: %s",str(cm.auth_data))
-        return True
-
-class CreateInfrastructure(Command):
-    def __init__(self, infra_id):
-        Command.__init__(self)
-        self.infra_id = infra_id
-    
-    @util.wet_method()
-    def perform(self, cm):
-        log.debug("[CM] Creating environment: %r", self.infra_id)
-        log.debug("[CM] Infraid: %s",str(self.infra_id))
-        log.debug("[CM] Endpoint: %s",str(cm.endpoint))
-        log.debug("[CM] Config manager auth_data: %s",str(cm.auth_data))
-
-class DropInfrastructure(Command):
-    def __init__(self, infra_id):
-        Command.__init__(self)
-        self.infra_id = infra_id
-    
-    @util.wet_method()
-    def perform(self, cm):
-        log.debug('[CM] Dropping infrastructure: %r', self.infra_id)
-        log.debug("[CM] Infraid: %s",str(self.infra_id))
-        log.debug("[CM] Endpoint: %s",str(cm.endpoint))
-        log.debug("[CM] Config manager auth_data: %s",str(cm.auth_data))
+	##TODO: Implement perform	
 
 
 @factory.register(ConfigManager, 'puppet')
@@ -140,25 +62,29 @@ class PuppetConfigManager(ConfigManager):
         self.cfg = cfg
 
     def cri_drop_infrastructure(self, infra_id):
-        return DropInfrastructure(infra_id)
+        return DummyCommand()
 
     def cri_create_infrastructure(self, infra_id):
-        return CreateInfrastructure(infra_id)
-    
+        return DummyCommand()
+
     def cri_infrastructure_exists(self, infra_id):
-        return InfrastructureExists(infra_id)
+        return DummyCommand(True)
 
     def cri_register_node(self, resolved_node_definition):
-        return RegisterNode(resolved_node_definition)
+        return DummyCommand()
 
     def cri_drop_node(self, instance_data):
-        return DropNode(instance_data)
+        return DummyCommand()
 
     def cri_get_node_state(self, instance_data):
-        return GetNodeState(instance_data)
+        return DummyCommand("ready")
 
     def cri_get_node_attribute(self, node_id, attribute):
-        return GetNodeAttribute(node_id, attribute)
+        return DummyCommand("dummy attribute")
+
+    def cri_resolve_attributes(self):
+	##TODO: fill parameters in both cri_ method and the constructor of command
+	return ResolveAttributes()	
 
     def perform(self, instruction):
         instruction.perform(self)
