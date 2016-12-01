@@ -43,13 +43,31 @@ class DummyCommand(Command):
         return self.retval
 
 class ResolveAttributes(Command):
-    def __init__(self):
+    def __init__(self, node_def):
 	Command.__init__(self)
-	##TODO: fill constructor of new command class
+        self.node_def = node_def
 
     def perform(self, cm):
-	##TODO: Implement perform	
-
+        cm_section = self.node_def.get('config_management')
+        log.debug("PUPPET CM section: %r\n",cm_section)
+        attributes=dict()
+        attributes['puppet']=dict()
+        #HERE COMES adding string content to the 3 sections, based on value of cm_section
+        attributes['puppet']['modules']="Ez a puppet.modules kulcs erteke!"
+	attributes['puppet']['manifests']="Ez a puppet.manifests kulcs erteke!"
+        attributes['puppet']['attributes']="Ez a puppet.attributes kulcs erteke!"
+        #Create modules string
+        modules_dict = cm_section.get('modules',None)
+        if modules_dict:
+           attributes['puppet']['modules'] = ' '.join([ str(k) for k in cm_section.get('modules',dict())])
+        log.debug("PUPPET CM attributes modules string: %r\n",attributes['puppet']['modules'])
+        #Create manifests string
+        manifests_dict = cm_section.get('manifests',None)
+        if manifests_dict:
+           attributes['puppet']['manifests'] = ' '.join([ str(k) for k in cm_section.get('manifests',dict())])
+        log.debug("PUPPET CM attributes manifests string: %r\n",attributes['puppet']['manifests'])
+        
+	return attributes
 
 @factory.register(ConfigManager, 'puppet')
 class PuppetConfigManager(ConfigManager):
@@ -82,9 +100,9 @@ class PuppetConfigManager(ConfigManager):
     def cri_get_node_attribute(self, node_id, attribute):
         return DummyCommand("dummy attribute")
 
-    def cri_resolve_attributes(self):
+    def cri_resolve_attributes(self, node_def):
 	##TODO: fill parameters in both cri_ method and the constructor of command
-	return ResolveAttributes()	
+	return ResolveAttributes(node_def)	
 
     def perform(self, instruction):
         instruction.perform(self)
@@ -93,7 +111,7 @@ class PuppetConfigManager(ConfigManager):
 class PuppetSchemaChecker(CMSchemaChecker):
     def __init__(self):
         self.req_keys = ["type", "endpoint"]
-        self.opt_keys = ["manifests", "modules", "variables"]
+        self.opt_keys = ["manifests", "modules", "attributes"]
     def perform_check(self, data):
         missing_keys = CMSchemaChecker.get_missing_keys(self, data, self.req_keys)
         if missing_keys:

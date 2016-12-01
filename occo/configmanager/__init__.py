@@ -96,8 +96,7 @@ class ConfigManager(factory.MultiBackend):
     def cri_infra_exists(self, infra_id):
         raise NotImplementedError()
 
-    def cri_resolve_attributes(self):
-	##TODO: update parameters
+    def cri_resolve_attributes(self, node_def):
 	raise NotImplementedError()
 
     def instantiate_cm_with_node_def(self, data):
@@ -164,7 +163,6 @@ class ConfigManager(factory.MultiBackend):
         cm = self.instantiate_cm_with_node_def(cfg)
         return cm.cri_get_node_attribute(node_id, attribute).perform(cm)
 
-    def resolve_attributes(self, data):
-	##TODO: update parameters
-	cm = self.instantiate_cm_with_node_def(data)
-	return cm.cri_resolve_attributes().perform(cm)
+    def resolve_attributes(self, node_def):
+	cm = self.instantiate_cm_with_node_def(node_def)
+	return cm.cri_resolve_attributes(node_def).perform(cm)
