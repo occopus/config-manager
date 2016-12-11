@@ -53,9 +53,9 @@ class ResolveAttributes(Command):
         attributes=dict()
         attributes['puppet']=dict()
         #HERE COMES adding string content to the 3 sections, based on value of cm_section
-        attributes['puppet']['modules']="Ez a puppet.modules kulcs erteke!"
-	attributes['puppet']['manifests']="Ez a puppet.manifests kulcs erteke!"
-        attributes['puppet']['attributes']="Ez a puppet.attributes kulcs erteke!"
+        attributes['puppet']['modules']=""
+	attributes['puppet']['manifests']=""
+        attributes['puppet']['attributes']=""
         #Create modules string
         modules_dict = cm_section.get('modules',None)
         if modules_dict:
@@ -66,7 +66,12 @@ class ResolveAttributes(Command):
         if manifests_dict:
            attributes['puppet']['manifests'] = ' '.join([ str(k) for k in cm_section.get('manifests',dict())])
         log.debug("PUPPET CM attributes manifests string: %r\n",attributes['puppet']['manifests'])
-        
+        #Create attributes string
+        attributes_dict = cm_section.get('attributes',None)
+        if attributes_dict:
+           attributes['puppet']['attributes'] = ' '.join([ str(k) for k in cm_section.get('attributes',dict())])
+        log.debug("PUPPET CM attributes string: %r\n",attributes['puppet']['attributes'])
+
 	return attributes
 
 @factory.register(ConfigManager, 'puppet')
@@ -110,8 +115,8 @@ class PuppetConfigManager(ConfigManager):
 @factory.register(CMSchemaChecker, PROTOCOL_ID)
 class PuppetSchemaChecker(CMSchemaChecker):
     def __init__(self):
-        self.req_keys = ["type", "endpoint"]
-        self.opt_keys = ["manifests", "modules", "attributes"]
+        self.req_keys = ["type", "endpoint", "manifests"]
+        self.opt_keys = ["modules", "attributes"]
     def perform_check(self, data):
         missing_keys = CMSchemaChecker.get_missing_keys(self, data, self.req_keys)
         if missing_keys:
