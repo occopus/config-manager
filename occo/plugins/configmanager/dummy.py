@@ -67,6 +67,9 @@ class DummyConfigManager(ConfigManager):
 
     def cri_get_node_attribute(self, node_id, attribute):
 	return DummyCommand("dummy attribute")
-  
+ 
+    def cri_resolve_attributes(self, node_def):
+        return DummyCommand(dict())
+
     def perform(self, instruction):
         instruction.perform(self)
