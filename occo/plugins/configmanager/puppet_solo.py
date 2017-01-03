@@ -12,7 +12,7 @@
 ### See the License for the specific language governing permissions and
 ### limitations under the License.
 
-""" Puppet Config Manager for OCCO
+""" Puppet Solo Config Manager for OCCO
 
 .. moduleauthor:: Gergo Zelenyak <ZZ-05@hotmail.com>
 
@@ -20,7 +20,7 @@
 
 from __future__ import absolute_import
 
-__all__  = [ 'PuppetConfigManager' ]
+__all__  = [ 'PuppetSoloConfigManager' ]
 
 from occo.configmanager import ConfigManager, Command, CMSchemaChecker
 import occo.util as util
@@ -30,7 +30,7 @@ import logging
 from occo.exceptions import SchemaError
 import occo.constants.status as status
 
-PROTOCOL_ID='puppet'
+PROTOCOL_ID='puppet_solo'
 
 log = logging.getLogger('occo.configmanager')
 
@@ -49,7 +49,6 @@ class ResolveAttributes(Command):
 
     def perform(self, cm):
         cm_section = self.node_def.get('config_management')
-        log.debug("PUPPET CM section: %r\n",cm_section)
         attributes=dict()
         attributes['puppet']=dict()
         #HERE COMES adding string content to the 3 sections, based on value of cm_section
@@ -60,26 +59,26 @@ class ResolveAttributes(Command):
         modules_dict = cm_section.get('modules',None)
         if modules_dict:
            attributes['puppet']['modules'] = ' '.join([ str(k) for k in cm_section.get('modules',dict())])
-        log.debug("PUPPET CM attributes modules string: %r\n",attributes['puppet']['modules'])
+        log.debug("Puppet solo config manager attributes modules string: %r\n",attributes['puppet']['modules'])
         #Create manifests string
         manifests_dict = cm_section.get('manifests',None)
         if manifests_dict:
            attributes['puppet']['manifests'] = ' '.join([ str(k) for k in cm_section.get('manifests',dict())])
-        log.debug("PUPPET CM attributes manifests string: %r\n",attributes['puppet']['manifests'])
+        log.debug("Puppet solo config manager attributes manifests string: %r\n",attributes['puppet']['manifests'])
         #Create attributes string
         attributes_dict = cm_section.get('attributes',None)
         if attributes_dict:
            attributes['puppet']['attributes'] = ' '.join([ str(k) for k in cm_section.get('attributes',dict())])
-        log.debug("PUPPET CM attributes string: %r\n",attributes['puppet']['attributes'])
+        log.debug("Puppet solo config manager attributes string: %r\n",attributes['puppet']['attributes'])
 
 	return attributes
 
-@factory.register(ConfigManager, 'puppet')
-class PuppetConfigManager(ConfigManager):
+@factory.register(ConfigManager, PROTOCOL_ID)
+class PuppetSoloConfigManager(ConfigManager):
 
     @util.wet_method()
     def __init__(self, endpoint, auth_data, **cfg):
-        log.debug('[CM] Puppet config manager initialisation... done.')
+        log.debug('[Puppet Solo] Puppet solo config manager initialisation... done.')
         self.endpoint = endpoint
         self.auth_data = auth_data
         self.cfg = cfg
