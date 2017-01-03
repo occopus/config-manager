@@ -35,6 +35,14 @@ PROTOCOL_ID='chef'
 
 log = logging.getLogger('occo.configmanager')
 
+class DummyCommand(Command):
+    def __init__(self, retval=None):
+        Command.__init__(self)
+        self.retval = retval
+
+    def perform(self, cm):
+        return self.retval
+
 class GetNodeState(Command):
     def __init__(self, instance_data):
         Command.__init__(self)
@@ -253,6 +261,9 @@ class ChefConfigManager(ConfigManager):
 
     def cri_get_node_attribute(self, node_id, attribute):
         return GetNodeAttribute(node_id, attribute)
+
+    def cri_resolve_attributes(self, node_def):
+        return DummyCommand(dict())
 
     def perform(self, instruction):
         instruction.perform(self)
