@@ -33,62 +33,14 @@ PROTOCOL_ID='dummy'
 
 log = logging.getLogger('occo.configmanager.dummy')
 
-class GetNodeState(Command):
-    def __init__(self, instance_data):
+
+class DummyCommand(Command):
+    def __init__(self, retval=None):
         Command.__init__(self)
-        self.instance_data = instance_data
+	self.retval = retval
 
-    def perform(self, sc):
-        return 'ready'
-
-class GetNodeAttribute(Command):
-    def __init__(self, node_id, atribute):
-        Command.__init__(self)
-        self.node_id = node_id
-        self.atribute = atribute
-
-    def perform(self, sc):
-        return 'dummy-value'
-
-class RegisterNode(Command):
-    def __init__(self, resolved_node_definition):
-        Command.__init__(self)
-        self.resolved_node_definition = resolved_node_definition
-
-    def perform(self, sc):
-        return None
-
-class DropNode(Command):
-    def __init__(self, instance_data):
-        Command.__init__(self)
-        self.instance_data = instance_data
-
-    def perform(self, sc):
-        return None
-
-class InfrastructureExists(Command):
-    def __init__(self, infra_id):
-        Command.__init__(self)
-        self.infra_id = infra_id
-
-    def perform(self, sc):
-        return True
-
-class CreateInfrastructure(Command):
-    def __init__(self, infra_id):
-        Command.__init__(self)
-        self.infra_id = infra_id
-
-    def perform(self, sc):
-        return None
-
-class DropInfrastructure(Command):
-    def __init__(self, infra_id):
-        Command.__init__(self)
-        self.infra_id = infra_id
-
-    def perform(self, sc):
-        return None
+    def perform(self, cm):
+	return self.retval	
 
 @factory.register(ConfigManager, 'dummy')
 class DummyConfigManager(ConfigManager):
@@ -96,25 +48,28 @@ class DummyConfigManager(ConfigManager):
         self.name = name
     
     def cri_drop_infrastructure(self, infra_id):
-        return DropInfrastructure(infra_id)
+	return DummyCommand()
 
     def cri_create_infrastructure(self, infra_id):
-        return CreateInfrastructure(infra_id)
+	return DummyCommand()
 
     def cri_infrastructure_exists(self, infra_id):
-        return InfrastructureExists(infra_id)
+	return DummyCommand(True)
 
     def cri_register_node(self, resolved_node_definition):
-        return RegisterNode(resolved_node_definition)
+	return DummyCommand()	
 
     def cri_drop_node(self, instance_data):
-        return DropNode(instance_data)
+	return DummyCommand()
 
     def cri_get_node_state(self, instance_data):
-        return GetNodeState(instance_data)
+        return DummyCommand("ready")
 
     def cri_get_node_attribute(self, node_id, attribute):
-        return GetNodeAttribute(node_id, attribute)
+	return DummyCommand("dummy attribute")
+ 
+    def cri_resolve_attributes(self, node_def):
+        return DummyCommand(dict())
 
     def perform(self, instruction):
         instruction.perform(self)
