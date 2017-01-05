@@ -216,6 +216,10 @@ class ChefConfigManager(ConfigManager):
     """
     @util.wet_method()
     def __init__(self, endpoint, auth_data, **cfg):
+        if not auth_data:
+            msg = "Authorisation information is not set for the target Chef Server ("+str(endpoint)+")!"
+            log.error(msg)
+            raise Exception(msg)
         config = dict()
         config['client'] = auth_data['client_name']
         config['key'] = auth_data['client_key']
