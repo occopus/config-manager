@@ -77,10 +77,8 @@ class ResolveAttributes(Command):
 class PuppetSoloConfigManager(ConfigManager):
 
     @util.wet_method()
-    def __init__(self, endpoint, auth_data, **cfg):
+    def __init__(self, **cfg):
         log.debug('[Puppet Solo] Puppet solo config manager initialisation... done.')
-        self.endpoint = endpoint
-        self.auth_data = auth_data
         self.cfg = cfg
 
     def cri_drop_infrastructure(self, infra_id):
@@ -114,7 +112,7 @@ class PuppetSoloConfigManager(ConfigManager):
 @factory.register(CMSchemaChecker, PROTOCOL_ID)
 class PuppetSchemaChecker(CMSchemaChecker):
     def __init__(self):
-        self.req_keys = ["type", "endpoint", "manifests"]
+        self.req_keys = ["type", "manifests"]
         self.opt_keys = ["modules", "attributes"]
     def perform_check(self, data):
         missing_keys = CMSchemaChecker.get_missing_keys(self, data, self.req_keys)
