@@ -18,7 +18,7 @@ from pip.req import parse_requirements
 
 setuptools.setup(
     name='OCCO-ConfigManager',
-    version='1.2',
+    version='1.3',
     author='MTA SZTAKI',
     author_email='occopus@lpds.sztaki.hu',
     namespace_packages=[
@@ -32,6 +32,7 @@ setuptools.setup(
     py_modules=[
         'occo.plugins.configmanager.dummy',
         'occo.plugins.configmanager.chef',
+        'occo.plugins.configmanager.puppet_solo',
     ],
     scripts=[],
     url='https://github.com/occopus',
