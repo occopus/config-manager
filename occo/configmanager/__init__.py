@@ -96,20 +96,23 @@ class ConfigManager(factory.MultiBackend):
     def cri_infra_exists(self, infra_id):
         raise NotImplementedError()
 
+    def cri_resolve_attributes(self, node_def):
+	raise NotImplementedError()
+
     def instantiate_cm_with_node_def(self, data):
         cfg = data.get('config_management')
         if not cfg:
             cfg = data.get('resolved_node_definition',dict()).get('config_management',None)
         if not cfg:
             cfg = dict(type='dummy',name='dummy')
-        auth_data = ib.real_main_info_broker.get('backends.auth_data',"config_management",cfg) if cfg.get('type') is not "dummy" else None
+        auth_data = ib.real_main_info_broker.get('backends.auth_data',"config_management",cfg) 
         return ConfigManager.instantiate(\
                protocol=cfg['type'],\
                auth_data=auth_data,\
                **cfg)
 
     def instantiate_cm_with_config_section(self, cfg):
-        auth_data = self.infobroker.get('backends.auth_data',"config_management",cfg) if cfg.get('type') is not "dummy" else None
+        auth_data = self.infobroker.get('backends.auth_data',"config_management",cfg)
         return ConfigManager.instantiate(\
                protocol=cfg['type'],\
                auth_data=auth_data,\
@@ -148,10 +151,10 @@ class ConfigManager(factory.MultiBackend):
             cm = self.instantiate_cm_with_config_section(cfg)
             retval = cm.cri_infrastructure_exists(infra_id).perform(cm)
             if retval is False:
-                log.debug("[CM] Environment for %r (%r) is not ready", cfg['type'], cfg['endpoint'])
+                log.debug("[CM] Environment for %r (%r) is not ready", cfg['type'], cfg.get("endpoint","<undefined>"))
                 break
             else:
-                log.debug("[CM] Environment for %r (%r) is ready", cfg['type'], cfg['endpoint'])
+                log.debug("[CM] Environment for %r (%r) is ready", cfg['type'], cfg.get("endpoint","<undefined>"))
         return retval
 
     def get_node_attribute(self, node_id, attribute):
@@ -159,3 +162,7 @@ class ConfigManager(factory.MultiBackend):
         cfg = node['resolved_node_definition']
         cm = self.instantiate_cm_with_node_def(cfg)
         return cm.cri_get_node_attribute(node_id, attribute).perform(cm)
+
+    def resolve_attributes(self, node_def):
+	cm = self.instantiate_cm_with_node_def(node_def)
+	return cm.cri_resolve_attributes(node_def).perform(cm)
