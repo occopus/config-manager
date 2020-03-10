@@ -18,7 +18,7 @@
 
 """
 
-from __future__ import absolute_import
+
 
 __all__  = [ 'ChefConfigManager' ]
 
@@ -78,7 +78,7 @@ class GetNodeAttribute(Command):
     def perform(self, cm):
         node = chef.Node(self.node_id, api=cm.chefapi)
         dotted_attr = \
-            attribute if isinstance(self.attribute, basestring) \
+            attribute if isinstance(self.attribute, str) \
             else '.'.join(self.attribute) if hasattr(self.attribute, '__iter__') \
             else util.f_raise(TypeError(
                 'Unknown attribute specification: {0}'.format(self.attribute)))
@@ -117,7 +117,7 @@ class RegisterNode(Command):
         return run_list
 
     def assemble_attributes(self, dest_attrs):
-        for k, v in self.resolved_node_definition['attributes'].iteritems():
+        for k, v in self.resolved_node_definition['attributes'].items():
             dest_attrs.set_dotted(k, v)
 
     @util.wet_method()

@@ -18,7 +18,7 @@
 
 """
 
-from __future__ import absolute_import
+
 
 __all__ = [ 'DummyConfigManager' ]
 
@@ -37,37 +37,37 @@ log = logging.getLogger('occo.configmanager.dummy')
 class DummyCommand(Command):
     def __init__(self, retval=None):
         Command.__init__(self)
-	self.retval = retval
+        self.retval = retval
 
     def perform(self, cm):
-	return self.retval	
+        return self.retval
 
 @factory.register(ConfigManager, 'dummy')
 class DummyConfigManager(ConfigManager):
     def __init__(self, name='dummy', **kwargs):
         self.name = name
-    
+
     def cri_drop_infrastructure(self, infra_id):
-	return DummyCommand()
+        return DummyCommand()
 
     def cri_create_infrastructure(self, infra_id):
-	return DummyCommand()
+        return DummyCommand()
 
     def cri_infrastructure_exists(self, infra_id):
-	return DummyCommand(True)
+        return DummyCommand(True)
 
     def cri_register_node(self, resolved_node_definition):
-	return DummyCommand()	
+        return DummyCommand()
 
     def cri_drop_node(self, instance_data):
-	return DummyCommand()
+        return DummyCommand()
 
     def cri_get_node_state(self, instance_data):
         return DummyCommand("ready")
 
     def cri_get_node_attribute(self, node_id, attribute):
-	return DummyCommand("dummy attribute")
- 
+        return DummyCommand("dummy attribute")
+
     def cri_resolve_attributes(self, node_def):
         return DummyCommand(dict())
 
