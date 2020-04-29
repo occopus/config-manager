@@ -18,7 +18,7 @@
 
 """
 
-from __future__ import absolute_import
+
 
 __all__  = [ 'PuppetSoloConfigManager' ]
 
@@ -44,7 +44,7 @@ class DummyCommand(Command):
 
 class ResolveAttributes(Command):
     def __init__(self, node_def):
-	Command.__init__(self)
+        Command.__init__(self)
         self.node_def = node_def
 
     def perform(self, cm):
@@ -53,7 +53,7 @@ class ResolveAttributes(Command):
         attributes['puppet']=dict()
         #HERE COMES adding string content to the 3 sections, based on value of cm_section
         attributes['puppet']['modules']=""
-	attributes['puppet']['manifests']=""
+        attributes['puppet']['manifests']=""
         attributes['puppet']['attributes']=""
         #Create modules string
         modules_dict = cm_section.get('modules',None)
@@ -71,7 +71,7 @@ class ResolveAttributes(Command):
            attributes['puppet']['attributes'] = ' '.join([ str(k) for k in cm_section.get('attributes',dict())])
         log.debug("Puppet solo config manager attributes string: %r\n",attributes['puppet']['attributes'])
 
-	return attributes
+        return attributes
 
 @factory.register(ConfigManager, PROTOCOL_ID)
 class PuppetSoloConfigManager(ConfigManager):
@@ -103,8 +103,8 @@ class PuppetSoloConfigManager(ConfigManager):
         return DummyCommand("dummy attribute")
 
     def cri_resolve_attributes(self, node_def):
-	##TODO: fill parameters in both cri_ method and the constructor of command
-	return ResolveAttributes(node_def)	
+        ##TODO: fill parameters in both cri_ method and the constructor of command
+        return ResolveAttributes(node_def)
 
     def perform(self, instruction):
         instruction.perform(self)

@@ -97,7 +97,7 @@ class ConfigManager(factory.MultiBackend):
         raise NotImplementedError()
 
     def cri_resolve_attributes(self, node_def):
-	raise NotImplementedError()
+        raise NotImplementedError()
 
     def instantiate_cm_with_node_def(self, data):
         cfg = data.get('config_management')
@@ -133,7 +133,7 @@ class ConfigManager(factory.MultiBackend):
     def create_infrastructure(self, infra_id):
         log.debug("[CM] Building necessary environments for infrastructure %r", infra_id)
         self.config_managers = self.infobroker.get('config_managers',infra_id) if self.config_managers is None else self.config_managers
-	for cfg in self.config_managers:
+        for cfg in self.config_managers:
             cm = self.instantiate_cm_with_config_section(cfg)
             cm.cri_create_infrastructure(infra_id).perform(cm)
 
@@ -164,5 +164,5 @@ class ConfigManager(factory.MultiBackend):
         return cm.cri_get_node_attribute(node_id, attribute).perform(cm)
 
     def resolve_attributes(self, node_def):
-	cm = self.instantiate_cm_with_node_def(node_def)
-	return cm.cri_resolve_attributes(node_def).perform(cm)
+        cm = self.instantiate_cm_with_node_def(node_def)
+        return cm.cri_resolve_attributes(node_def).perform(cm)
